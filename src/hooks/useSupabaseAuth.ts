@@ -252,6 +252,7 @@ export const useSupabaseAuth = () => {
       console.error('❌ Registration error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
+    }
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
