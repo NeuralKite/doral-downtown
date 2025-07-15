@@ -330,7 +330,6 @@ export const useSupabaseAuth = () => {
     register,
     logout,
     resendVerification,
-    verifyEmail,
-    updateDisplayName
+    verifyEmail
   };
 };
