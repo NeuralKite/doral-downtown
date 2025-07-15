@@ -12,9 +12,20 @@ const HeroSection: React.FC = () => {
   };
 
   return (
-    <section className="relative min-h-[75vh] bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-secondary text-white overflow-hidden flex items-center justify-center py-16">
+    <section className="relative min-h-[75vh] text-white overflow-hidden flex items-center justify-center py-16">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('https://images.pexels.com/photos/2346091/pexels-photo-2346091.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1')`
+        }}
+      />
+      
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/80 via-brand-primary/70 to-brand-secondary/80" />
+      
       {/* Subtle Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
@@ -29,13 +40,13 @@ const HeroSection: React.FC = () => {
       </div>
       
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-12 leading-tight">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-12 leading-tight drop-shadow-lg text-shadow-lg">
           {t('welcome')}
         </h1>
         
         {/* Enhanced Search Form */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-          <div className="relative bg-white rounded-full shadow-2xl p-2 backdrop-blur-sm">
+          <div className="relative bg-white/95 backdrop-blur-md rounded-full shadow-2xl p-2">
             <div className="flex items-center">
               <div className="flex items-center flex-1">
                 <Search className="h-5 w-5 text-gray-400 ml-6 mr-4" />
@@ -49,7 +60,7 @@ const HeroSection: React.FC = () => {
               </div>
               <button
                 type="submit"
-                className="bg-brand-primary text-white px-8 py-4 rounded-full hover:bg-brand-primary/90 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl"
+                className="bg-brand-primary text-white px-8 py-4 rounded-full hover:bg-brand-primary/90 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl backdrop-blur-sm"
               >
                 Search
               </button>
@@ -58,7 +69,7 @@ const HeroSection: React.FC = () => {
         </form>
 
         {/* Subtle Call to Action */}
-        <p className="mt-8 text-lg text-white/80 max-w-xl mx-auto">
+        <p className="mt-8 text-lg text-white/90 max-w-xl mx-auto drop-shadow-md">
           Discover restaurants, shops, events, and everything that makes Doral special
         </p>
       </div>
