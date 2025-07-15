@@ -81,7 +81,7 @@ function EmailVerificationPage() {
     };
 
     checkAuthStatus();
-  }, [navigate]);
+  }, [navigate, timeSpent]);
 
   // Listen for auth state changes (when email verification completes)
   useEffect(() => {
@@ -115,7 +115,7 @@ function EmailVerificationPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, timeSpent]);
 
   // Check URL parameters for automatic verification
   useEffect(() => {
@@ -280,7 +280,6 @@ function EmailVerificationPage() {
                     ) : (
                       <span>Espera {30 - timeSpent}s para reenviar</span>
                     )
-                  )
                   )}
                 </button>
               )}
