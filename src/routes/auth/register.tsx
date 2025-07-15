@@ -139,14 +139,14 @@ function RegisterPage() {
         // Navigate to verification page immediately
         setTimeout(() => {
           navigate({ to: '/auth/verify-email', search: { email: formData.email, role: selectedRole } });
-        }, 1500); // Dar un poco más de tiempo para mostrar el mensaje
+        }, 2000); // Give more time to show the success message
       } else {
-        setError('Registration failed. Email may already be in use.');
+        setError('Registration failed. Please check if the email is already in use or try again.');
       }
     } catch (err) {
-      console.log('✅ Registration successful, user created:', authData.user?.id);
-      console.log('📧 Email confirmation required for:', data.email);
+      console.error('❌ Registration error:', err);
       setError('An error occurred during registration. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };

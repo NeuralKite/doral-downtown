@@ -252,11 +252,6 @@ export const useSupabaseAuth = () => {
       console.error('❌ Registration error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
-    }
-  };
-
-  // Function to update display name in auth metadata
-  const updateDisplayName = async (name: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {

@@ -47,17 +47,36 @@ function EmailVerificationPage() {
   useEffect(() => {
     // Check if user is already authenticated (email was verified)
     const checkAuthStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setIsVerified(true);
-        setMessage('✅ Email verified successfully! Redirecting...');
-        setMessageType('success');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        // Wait at least 3 seconds before redirecting so user can see the success message
-        const minWaitTime = Math.max(3000 - (timeSpent * 1000), 1000);
-        setTimeout(() => {
-          navigate({ to: '/' });
-        }, minWaitTime);
+        if (error) {
+          console.error('Error checking session:', error);
+          return;
+        }
+        
+        if (session?.user) {
+          // Check if user has a profile (email is verified and profile created)
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+            
+          if (profile) {
+            setIsVerified(true);
+            setMessage('✅ Email verified successfully! Welcome to Doral Downtown!');
+            setMessageType('success');
+            
+            // Wait at least 3 seconds before redirecting so user can see the success message
+            const minWaitTime = Math.max(3000 - (timeSpent * 1000), 1000);
+            setTimeout(() => {
+              navigate({ to: '/' });
+            }, minWaitTime);
+          }
+        }
+      } catch (error) {
+        console.error('Error in checkAuthStatus:', error);
       }
     };
 
@@ -67,16 +86,31 @@ function EmailVerificationPage() {
   // Listen for auth state changes (when email verification completes)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        setIsVerified(true);
-        setMessage('✅ Email verified successfully! Welcome to Doral Downtown!');
-        setMessageType('success');
-        
-        // Ensure user sees success message for at least 3 seconds
-        const minWaitTime = Math.max(3000 - (timeSpent * 1000), 1000);
-        setTimeout(() => {
-          navigate({ to: '/' });
-        }, minWaitTime);
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Wait a moment for the profile to be created by the trigger
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single();
+              
+            if (profile) {
+              setIsVerified(true);
+              setMessage('✅ Email verified successfully! Welcome to Doral Downtown!');
+              setMessageType('success');
+              
+              // Ensure user sees success message for at least 3 seconds
+              const minWaitTime = Math.max(3000 - (timeSpent * 1000), 1000);
+              setTimeout(() => {
+                navigate({ to: '/' });
+              }, minWaitTime);
+            }
+          }, 1000); // Wait 1 second for profile creation
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
       }
     });
 
@@ -196,59 +230,61 @@ function EmailVerificationPage() {
 
           {!isVerified && (
             <div className="text-center space-y-4">
-            <p className="text-gray-600">
-              We've sent a verification link to your email address. Please check your inbox and click the link to activate your account.
-            </p>
-            
-            {timeSpent > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-700">
-                  ⏱️ Time on this page: {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, '0')}
-                </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Take your time to check your email thoroughly
-                </p>
+              <p className="text-gray-600">
+                We've sent a verification link to your email address. Please check your inbox and click the link to activate your account.
+              </p>
+              
+              {timeSpent > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-700">
+                    ⏱️ Time on this page: {Math.floor(timeSpent / 60)}:{(timeSpent % 60).toString().padStart(2, '0')}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Take your time to check your email thoroughly
+                  </p>
+                </div>
+              )}
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 mb-2">
+                  ¿No recibiste el email?
+                </h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Revisa tu carpeta de spam o correo no deseado</li>
+                  {email && <li>• Asegúrate de que {email} sea correcto</li>}
+                  <li>• La entrega del email puede tomar 1-5 minutos</li>
+                  <li>• Algunos proveedores de email pueden demorar más</li>
+                </ul>
               </div>
-            )}
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="font-medium text-gray-900 mb-2">
-                Didn't receive the email?
-              </h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Check your spam or junk folder</li>
-                {email && <li>• Make sure {email} is correct</li>}
-                <li>• Email delivery can take 1-5 minutes</li>
-              </ul>
-            </div>
 
-            {/* Resend Button */}
-            {email && (
-              <button
-                onClick={handleResendEmail}
-                disabled={isLoading || countdown > 0}
-                className="w-full bg-brand-primary text-white py-3 rounded-lg hover:bg-brand-primary/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Sending...</span>
-                  </>
-                ) : countdown > 0 ? (
-                  <span>Resend in {countdown}s</span>
-                ) : (
-                  timeSpent >= 30 ? ( // Only show resend after 30 seconds
-                  <>
-                    <Mail className="h-4 w-4" />
-                    <span>Resend Verification Email</span>
-                  </>
+              {/* Resend Button */}
+              {email && (
+                <button
+                  onClick={handleResendEmail}
+                  disabled={isLoading || countdown > 0}
+                  className="w-full bg-brand-primary text-white py-3 rounded-lg hover:bg-brand-primary/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Enviando...</span>
+                    </>
+                  ) : countdown > 0 ? (
+                    <span>Reenviar en {countdown}s</span>
                   ) : (
-                    <span>Wait {30 - timeSpent}s to resend</span>
+                    timeSpent >= 30 ? ( // Only show resend after 30 seconds
+                    <>
+                      <Mail className="h-4 w-4" />
+                      <span>Reenviar Email de Verificación</span>
+                    </>
+                    ) : (
+                      <span>Espera {30 - timeSpent}s para reenviar</span>
+                    )
                   )
-                )}
-              </button>
-            )}
-          </div>
+                  )}
+                </button>
+              )}
+            </div>
           )}
         </div>
 

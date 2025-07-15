@@ -78,11 +78,28 @@ function LoginPage() {
           attempts++;
           
           // Check if user is loaded
-          if (user && user.role) {
-            const redirectPath = redirect || getRoleBasedRedirectPath(user.role);
-            console.log('✅ Login complete, redirecting to:', redirectPath);
-            navigate({ to: redirectPath as any });
-          } else if (attempts < maxAttempts) {
+          // Get current auth state
+          supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+            if (currentUser) {
+              // User is authenticated, get their profile
+              supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .single()
+                .then(({ data: profile }) => {
+                  if (profile) {
+                    const redirectPath = redirect || getRoleBasedRedirectPath(profile.role);
+                    console.log('✅ Login complete, redirecting to:', redirectPath);
+                    navigate({ to: redirectPath as any });
+                  } else if (attempts < maxAttempts) {
+                    setTimeout(checkAuthAndRedirect, 500);
+                  } else {
+                    console.warn('⚠️ Profile not found, redirecting to home');
+                    navigate({ to: '/' });
+                  }
+                });
+            } else if (attempts < maxAttempts) {
             // If user is not loaded yet, wait a bit more
             console.log(`⏳ Waiting for user data... (${attempts}/${maxAttempts})`);
             setTimeout(checkAuthAndRedirect, 500);
@@ -90,6 +107,7 @@ function LoginPage() {
             console.warn('⚠️ Timeout waiting for user data, redirecting to home');
             navigate({ to: '/' });
           }
+          });
         };
         
         // Start checking after a short delay
