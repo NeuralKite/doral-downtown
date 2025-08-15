@@ -70,11 +70,15 @@ function LoginPage() {
       if (result) {
         setSuccess('Login successful!');
         
-        // Simple redirect after short delay
+        // Redirect immediately after successful login
         setTimeout(() => {
-          const redirectPath = redirect || '/';
-          navigate({ to: redirectPath as any });
-        }, 1000);
+          if (redirect) {
+            navigate({ to: redirect as any });
+          } else {
+            // Let the auth system handle the redirect to home
+            navigate({ to: '/' });
+          }
+        }, 500);
       } else {
         setError('Invalid email or password. Please check your credentials and try again.');
       }

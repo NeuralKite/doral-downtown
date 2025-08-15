@@ -65,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({
         };
       default:
         return {
-          text: 'My Profile',
+          text: 'Dashboard',
           action: () => window.location.href = '/profile'
         };
     }

@@ -82,35 +82,35 @@ const UserMenu: React.FC<UserMenuProps> = ({
   const getAccountLabel = (role: UserRole) => {
     switch (role) {
       case 'admin':
-        return 'Admin Account';
+        return 'Admin';
       case 'business':
-        return 'Business Account';
+        return 'Business';
       default:
-        return 'My Account';
+        return 'User';
     }
   };
 
   const authenticatedItems = [
     ...(user.role === 'user' ? [{
-      label: t('my_profile'),
+      label: 'Dashboard',
       value: 'profile',
       icon: UserCircle,
       href: '/profile'
     }] : []),
     ...(user.role === 'admin' ? [{
-      label: t('admin_panel'),
+      label: 'Admin Dashboard',
       value: 'admin',
       icon: Shield,
       href: '/admin'
     }] : []),
     ...(user.role === 'business' ? [{
-      label: t('business_panel'),
+      label: 'Business Dashboard',
       value: 'business',
       icon: Store,
       href: '/business'
     }] : []),
     ...(user.role !== 'user' ? [{
-      label: t('my_profile'),
+      label: 'My Profile',
       value: 'profile',
       icon: UserCircle,
       href: '/profile'
