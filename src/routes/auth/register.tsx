@@ -40,7 +40,7 @@ function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { register } = useSupabaseAuth();
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'user' | 'business'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,10 +59,6 @@ function RegisterPage() {
   });
 
   const validateForm = () => {
-    if (!selectedRole) {
-      setError('Please select an account type');
-      return false;
-    }
 
     if (!formData.email || !formData.password || !formData.name) {
       setError('Email, password, and name are required');
@@ -143,42 +139,6 @@ function RegisterPage() {
     }
   };
 
-  const getRoleInfo = (role: UserRole) => {
-    switch (role) {
-      case 'user':
-        return {
-          icon: Users,
-          title: 'Personal Account',
-          description: 'Explore and discover amazing places in Doral',
-          color: 'from-green-500 to-green-600',
-          borderColor: 'border-green-500',
-          bgColor: 'bg-green-50',
-          textColor: 'text-green-700'
-        };
-      case 'business':
-        return {
-          icon: Building,
-          title: 'Business Owner',
-          description: 'Manage your business listings and connect with customers',
-          color: 'from-blue-500 to-blue-600',
-          borderColor: 'border-blue-500',
-          bgColor: 'bg-blue-50',
-          textColor: 'text-blue-700'
-        };
-      case 'admin':
-        return {
-          icon: Shield,
-          title: 'Administrator',
-          description: 'Manage platform content and users',
-          color: 'from-red-500 to-red-600',
-          borderColor: 'border-red-500',
-          bgColor: 'bg-red-50',
-          textColor: 'text-red-700'
-        };
-      default:
-        return getRoleInfo('user');
-    }
-  };
 
   const handleBack = () => {
     navigate({ to: '/' });
@@ -190,7 +150,7 @@ function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-2xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
           <button
@@ -209,80 +169,44 @@ function RegisterPage() {
           </p>
         </div>
 
-        {/* Step 1: Role Selection */}
-        {!selectedRole && (
-          <div className="bg-white rounded-2xl shadow-md p-8">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Account Type</h3>
-              <p className="text-gray-600">Select the option that best describes you</p>
+        {/* Registration Form */}
+        <div className="bg-white rounded-2xl shadow-md p-8">
+          {/* Account Type Toggle */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Type</h3>
+            <div className="flex bg-gray-100 rounded-xl p-1">
+              <button
+                type="button"
+                onClick={() => setSelectedRole('user')}
+                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                  selectedRole === 'user'
+                    ? 'bg-white text-brand-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <User className="h-5 w-5" />
+                <span className="font-medium">Personal</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRole('business')}
+                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                  selectedRole === 'business'
+                    ? 'bg-white text-brand-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Building className="h-5 w-5" />
+                <span className="font-medium">Business</span>
+              </button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {(['user', 'business', 'admin'] as UserRole[]).map((role) => {
-                const roleInfo = getRoleInfo(role);
-                const IconComponent = roleInfo.icon;
-                
-                return (
-                  <div
-                    key={role}
-                    onClick={() => setSelectedRole(role)}
-                    className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
-                  >
-                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-8 text-center hover:border-gray-300 hover:shadow-lg transition-all duration-300">
-                      <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br ${roleInfo.color} flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300`}>
-                        <IconComponent className="h-10 w-10 text-white" />
-                      </div>
-                      
-                      <h4 className="text-xl font-bold text-gray-900 mb-3">
-                        {roleInfo.title}
-                      </h4>
-                      
-                      <p className="text-gray-600 mb-6 leading-relaxed">
-                        {roleInfo.description}
-                      </p>
-                      
-                      <button className={`w-full bg-gradient-to-r ${roleInfo.color} text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300`}>
-                        Select {roleInfo.title}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              {selectedRole === 'user' 
+                ? 'Explore and discover amazing places in Doral'
+                : 'Manage your business listings and connect with customers'
+              }
+            </p>
           </div>
-        )}
-
-        {/* Step 2: Registration Form */}
-        {selectedRole && (
-          <div className="bg-white rounded-2xl shadow-md p-8">
-            {/* Selected Role Display */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  {(() => {
-                    const roleInfo = getRoleInfo(selectedRole);
-                    const IconComponent = roleInfo.icon;
-                    return (
-                      <>
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${roleInfo.color} flex items-center justify-center`}>
-                          <IconComponent className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900">{roleInfo.title}</h3>
-                          <p className="text-gray-600">{roleInfo.description}</p>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-                <button
-                  onClick={() => setSelectedRole(null)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  Change
-                </button>
-              </div>
-            </div>
 
             {/* Error/Success Messages */}
             {error && (
@@ -500,14 +424,17 @@ function RegisterPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full bg-gradient-to-r ${getRoleInfo(selectedRole).color} text-white py-4 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`w-full text-white py-4 rounded-xl hover:shadow-lg transition-all duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                    selectedRole === 'business' 
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700' 
+                      : 'bg-gradient-to-r from-brand-primary to-brand-secondary hover:from-brand-primary/90 hover:to-brand-secondary/90'
+                  }`}
                 >
-                  {isLoading ? 'Creating Account...' : `Create ${getRoleInfo(selectedRole).title}`}
+                  {isLoading ? 'Creating Account...' : `Create ${selectedRole === 'business' ? 'Business' : 'Personal'} Account`}
                 </button>
               </div>
             </form>
-          </div>
-        )}
+        </div>
 
         {/* Switch to Login */}
         <div className="text-center">
