@@ -104,7 +104,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
       href: '/admin'
     }] : []),
     ...(user.role === 'business' ? [{
-      label: 'Business Dashboard',
+      label: 'Dashboard',
       value: 'business',
       icon: Store,
       href: '/business'

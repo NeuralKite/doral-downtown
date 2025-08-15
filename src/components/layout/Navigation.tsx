@@ -100,8 +100,8 @@ const Navigation: React.FC<NavigationProps> = ({
       case 'business':
         return [
           {
-            id: 'business-dashboard',
-            label: 'Business Panel',
+            id: 'dashboard',
+            label: 'Dashboard',
             icon: Store,
             href: '/business',
             isActive: location.pathname.startsWith('/business')
