@@ -155,7 +155,7 @@ export const useSupabaseAuth = () => {
       setAuthState({
         user: profile,
         isLoading: false,
-        isAuthenticated: true
+        isAuthenticated: true,
         emailVerified,
         profileVerified: Boolean(profile?.is_verified)
       });
