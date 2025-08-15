@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Navigate } from '@tanstack/react-router';
 import { 
   User, 
   Heart, 
@@ -18,7 +19,7 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 
 const UserProfile: React.FC = () => {
   const { t } = useTranslation();
-  const { user, updateProfile } = useSupabaseAuth();
+  const { user, updateProfile, isAuthenticated, isLoading } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,6 +30,20 @@ const UserProfile: React.FC = () => {
     business_address: user?.business_address || '',
     business_website: user?.business_website || ''
   });
+
+  // Show simple loading only if still checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/auth/login" search={{ redirect: '/profile' }} />;
+  }
 
   const handleSaveProfile = async () => {
     const success = await updateProfile(formData);
