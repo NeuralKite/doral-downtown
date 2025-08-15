@@ -233,12 +233,21 @@ export const useSupabaseAuth = () => {
         name: data.name 
       });
 
-      // Paso 1: registro mínimo (sin metadata al principio)
+      // Registro con todos los datos en una sola llamada
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`,
+          data: {
+            full_name: data.name,
+            role: data.role,
+            ...(data.phone && { phone: data.phone }),
+            ...(data.role === 'business' && data.businessName && { business_name: data.businessName }),
+            ...(data.role === 'business' && data.businessDescription && { business_description: data.businessDescription }),
+            ...(data.role === 'business' && data.businessAddress && { business_address: data.businessAddress }),
+            ...(data.role === 'business' && data.businessWebsite && { business_website: data.businessWebsite })
+          }
         }
       });
 
@@ -253,24 +262,6 @@ export const useSupabaseAuth = () => {
         console.error('❌ No user data returned from registration');
         setAuthState(prev => ({ ...prev, isLoading: false }));
         return false;
-      }
-
-      // Paso 2: añadir metadata mínima después del registro exitoso
-      try {
-        await supabase.auth.updateUser({ 
-          data: { 
-            full_name: data.name, 
-            role: data.role,
-            ...(data.phone && { phone: data.phone }),
-            ...(data.role === 'business' && data.businessName && { business_name: data.businessName }),
-            ...(data.role === 'business' && data.businessDescription && { business_description: data.businessDescription }),
-            ...(data.role === 'business' && data.businessAddress && { business_address: data.businessAddress }),
-            ...(data.role === 'business' && data.businessWebsite && { business_website: data.businessWebsite })
-          } 
-        });
-        console.log('✅ User metadata updated successfully');
-      } catch (metadataError) {
-        console.warn('⚠️ Could not update user metadata, but registration was successful:', metadataError);
       }
 
       console.log('✅ Registration successful!');
