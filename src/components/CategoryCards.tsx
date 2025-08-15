@@ -32,43 +32,49 @@ const CategoryCards: React.FC<CategoryCardsProps> = ({ onCategorySelect }) => {
             <div
               key={category.id}
               onClick={() => onCategorySelect(category.id)}
-              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-2"
+              className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-1"
             >
-              <div className="p-8 text-center">
+              <div className="p-6 text-center">
                 <div 
-                  className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center text-white transform group-hover:scale-110 transition-transform duration-300"
+                  className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-white transform group-hover:scale-110 transition-transform duration-300"
                   style={{ backgroundColor: category.color }}
                 >
                   {getIcon(category.icon)}
                 </div>
                 
-                <h3 className="text-xl font-bold text-brand-primary mb-3 group-hover:text-opacity-80 transition-colors">
+                <h3 className="text-xl font-bold text-brand-primary mb-2 group-hover:text-brand-primary/80 transition-colors">
                   {t(category.id)}
                 </h3>
                 
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 mb-4 text-sm">
                   {category.subcategories.reduce((total, sub) => total + sub.count, 0)} places
                 </p>
                 
-                <div className="flex flex-wrap gap-2 justify-center">
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
                   {category.subcategories.slice(0, 3).map((sub) => (
                     <span
                       key={sub.id}
-                      className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full"
+                      className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium"
                     >
                       {t(sub.id)}
                     </span>
                   ))}
                   {category.subcategories.length > 3 && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                    <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full font-medium">
                       +{category.subcategories.length - 3} more
                     </span>
                   )}
                 </div>
+                
+                <div className="pt-4 border-t border-gray-100">
+                  <button className="w-full bg-brand-primary/10 text-brand-primary py-2 rounded-lg hover:bg-brand-primary hover:text-white transition-colors font-medium text-sm">
+                    Explore {t(category.id)}
+                  </button>
+                </div>
               </div>
               
               <div 
-                className="h-1 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                className="h-2 w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
                 style={{ backgroundColor: category.color }}
               />
             </div>

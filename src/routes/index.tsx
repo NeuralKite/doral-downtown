@@ -6,7 +6,6 @@ import FeaturedPlaces from '../components/FeaturedPlaces';
 import NewsSection from '../components/NewsSection';
 import EventsSection from '../components/EventsSection';
 import PhotoGallery from '../components/PhotoGallery';
-import Newsletter from '../components/Newsletter';
 import BusinessList from '../components/BusinessList';
 import BusinessDetail from '../components/BusinessDetail';
 import NewsDetail from '../components/NewsDetail';
@@ -140,7 +139,6 @@ function Index() {
       <HeroSection onSearch={handleSearch} />
       <CategoryCards onCategorySelect={handleCategorySelect} />
       <FeaturedPlaces onViewDetails={handleViewDetails} />
-      <TestimonialsSection />
       <NewsSection onNewsDetail={handleNewsDetail} />
       <EventsSection />
       <PhotoGallery />
