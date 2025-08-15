@@ -27,13 +27,14 @@ function EmailVerificationPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { email, token, role } = useSearch({ from: '/auth/verify-email' });
-  const { resendVerification } = useSupabaseAuth();
+  const { resendVerification, checkVerificationStatus, getRoleBasedRedirectPath } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [countdown, setCountdown] = useState(0);
   const [isVerified, setIsVerified] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     // Track time spent on verification page
@@ -43,79 +44,6 @@ function EmailVerificationPage() {
 
     return () => clearInterval(timeTracker);
   }, []);
-
-  useEffect(() => {
-    // Check if user is already authenticated (email was verified)
-    const checkAuthStatus = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error checking session:', error);
-          return;
-        }
-        
-        if (session?.user) {
-          // Check if user has a profile (email is verified and profile created)
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-            
-          if (profile) {
-            setIsVerified(true);
-            setMessage('✅ Email verified successfully! Welcome to Doral Downtown!');
-            setMessageType('success');
-            
-            // Wait at least 3 seconds before redirecting so user can see the success message
-            const minWaitTime = Math.max(3000 - (timeSpent * 1000), 1000);
-            setTimeout(() => {
-              navigate({ to: '/' });
-            }, minWaitTime);
-          }
-        }
-      } catch (error) {
-        console.error('Error in checkAuthStatus:', error);
-      }
-    };
-
-    checkAuthStatus();
-  }, [navigate, timeSpent]);
-
-  // Listen for auth state changes (when email verification completes)
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Wait a moment for the profile to be created by the trigger
-          setTimeout(async () => {
-            const { data: profile } = await supabase
-              .from('user_profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-              
-            if (profile) {
-              setIsVerified(true);
-              setMessage('✅ Email verified successfully! Welcome to Doral Downtown!');
-              setMessageType('success');
-              
-              // Ensure user sees success message for at least 3 seconds
-              const minWaitTime = Math.max(3000 - (timeSpent * 1000), 1000);
-              setTimeout(() => {
-                navigate({ to: '/' });
-              }, minWaitTime);
-            }
-          }, 1000); // Wait 1 second for profile creation
-        }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate, timeSpent]);
 
   // Check URL parameters for automatic verification
   useEffect(() => {
@@ -127,6 +55,9 @@ function EmailVerificationPage() {
       // Supabase will handle this automatically, just show a message
       setMessage('Verifying your email...');
       setMessageType('success');
+      
+      // Check status after a short delay
+      setTimeout(handleContinue, 2000);
     }
   }, []);
 
@@ -137,6 +68,47 @@ function EmailVerificationPage() {
     }
   }, [countdown]);
 
+  const handleContinue = async () => {
+    setCheckingStatus(true);
+    setMessage('Checking verification status...');
+    setMessageType('success');
+    
+    try {
+      const { emailVerified, profileVerified, profile } = await checkVerificationStatus();
+      
+      if (!emailVerified) {
+        setMessage('Email not yet verified. Please check your inbox and click the verification link.');
+        setMessageType('error');
+        setCheckingStatus(false);
+        return;
+      }
+      
+      if (!profileVerified || !profile) {
+        setMessage('Your verification is in process. Please wait a few seconds and try again.');
+        setMessageType('error');
+        setCheckingStatus(false);
+        return;
+      }
+      
+      // Success! Redirect based on role
+      setIsVerified(true);
+      setMessage('✅ Email verified successfully! Welcome to Doral Downtown!');
+      setMessageType('success');
+      
+      const redirectPath = getRoleBasedRedirectPath(profile.role || 'user');
+      
+      setTimeout(() => {
+        navigate({ to: redirectPath as any });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+      setMessage('Error checking verification status. Please try again.');
+      setMessageType('error');
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
   const handleResendEmail = async () => {
     if (!email) {
       setMessage('Email address is required to resend verification.');
@@ -233,6 +205,25 @@ function EmailVerificationPage() {
               <p className="text-gray-600">
                 We've sent a verification link to your email address. Please check your inbox and click the link to activate your account.
               </p>
+              
+              {/* Continue Button */}
+              <button
+                onClick={handleContinue}
+                disabled={checkingStatus}
+                className="w-full bg-brand-primary text-white py-3 rounded-lg hover:bg-brand-primary/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {checkingStatus ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <span>Checking...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    <span>I've verified my email, continue</span>
+                  </>
+                )}
+              </button>
               
               {timeSpent > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">

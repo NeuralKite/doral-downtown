@@ -7,13 +7,17 @@ interface AuthState {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  emailVerified?: boolean;
+  profileVerified?: boolean;
 }
 
 export const useSupabaseAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,
-    isAuthenticated: false
+    isAuthenticated: false,
+    emailVerified: false,
+    profileVerified: false
   });
 
   useEffect(() => {
@@ -31,20 +35,25 @@ export const useSupabaseAuth = () => {
           setAuthState({
             user: null,
             isLoading: false,
-            isAuthenticated: false
+            isAuthenticated: false,
+            emailVerified: false,
+            profileVerified: false
           });
           return;
         }
         
         if (session?.user) {
           console.log('✅ Session found, loading profile for user:', session.user.id);
-          await loadUserProfile(session.user.id);
+          const emailVerified = Boolean(session.user.email_confirmed_at);
+          await loadUserProfile(session.user.id, emailVerified);
         } else {
           console.log('❌ No session found, user not authenticated');
           setAuthState({
             user: null,
             isLoading: false,
-            isAuthenticated: false
+            isAuthenticated: false,
+            emailVerified: false,
+            profileVerified: false
           });
         }
       } catch (error) {
@@ -54,7 +63,9 @@ export const useSupabaseAuth = () => {
         setAuthState({
           user: null,
           isLoading: false,
-          isAuthenticated: false
+          isAuthenticated: false,
+          emailVerified: false,
+          profileVerified: false
         });
       }
     };
@@ -67,12 +78,15 @@ export const useSupabaseAuth = () => {
         console.log('🔄 Auth state changed:', event, session?.user?.id);
         
         if (session?.user) {
-          await loadUserProfile(session.user.id);
+          const emailVerified = Boolean(session.user.email_confirmed_at);
+          await loadUserProfile(session.user.id, emailVerified);
         } else {
           setAuthState({
             user: null,
             isLoading: false,
-            isAuthenticated: false
+            isAuthenticated: false,
+            emailVerified: false,
+            profileVerified: false
           });
         }
       } catch (error) {
@@ -80,7 +94,9 @@ export const useSupabaseAuth = () => {
         setAuthState({
           user: null,
           isLoading: false,
-          isAuthenticated: false
+          isAuthenticated: false,
+          emailVerified: false,
+          profileVerified: false
         });
       }
     });
@@ -88,7 +104,7 @@ export const useSupabaseAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loadUserProfile = async (userId: string) => {
+  const loadUserProfile = async (userId: string, emailVerified: boolean = false) => {
     try {
       console.log('📋 Loading user profile for:', userId);
       
@@ -117,7 +133,9 @@ export const useSupabaseAuth = () => {
           setAuthState({
             user: null,
             isLoading: false,
-            isAuthenticated: false
+            isAuthenticated: false,
+            emailVerified,
+            profileVerified: false
           });
           return;
         }
@@ -126,7 +144,9 @@ export const useSupabaseAuth = () => {
         setAuthState({
           user: null,
           isLoading: false,
-          isAuthenticated: false
+          isAuthenticated: false,
+          emailVerified,
+          profileVerified: false
         });
         return;
       }
@@ -136,6 +156,8 @@ export const useSupabaseAuth = () => {
         user: profile,
         isLoading: false,
         isAuthenticated: true
+        emailVerified,
+        profileVerified: Boolean(profile?.is_verified)
       });
     } catch (error) {
       console.error('❌ Unexpected error loading user profile:', error);
@@ -149,7 +171,9 @@ export const useSupabaseAuth = () => {
       setAuthState({
         user: null,
         isLoading: false,
-        isAuthenticated: false
+        isAuthenticated: false,
+        emailVerified: false,
+        profileVerified: false
       });
     }
   };
@@ -209,21 +233,12 @@ export const useSupabaseAuth = () => {
         name: data.name 
       });
 
-      // Sign up with Supabase Auth - let the trigger handle user_profiles creation
+      // Paso 1: registro mínimo (sin metadata al principio)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(data.email)}&role=${data.role}`,
-          data: {
-            full_name: data.name, // Use full_name as expected by trigger
-            role: data.role,
-            ...(data.phone && { phone: data.phone }),
-            ...(data.role === 'business' && data.businessName && { business_name: data.businessName }),
-            ...(data.role === 'business' && data.businessDescription && { business_description: data.businessDescription }),
-            ...(data.role === 'business' && data.businessAddress && { business_address: data.businessAddress }),
-            ...(data.role === 'business' && data.businessWebsite && { business_website: data.businessWebsite })
-          }
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`
         }
       });
 
@@ -240,12 +255,27 @@ export const useSupabaseAuth = () => {
         return false;
       }
 
+      // Paso 2: añadir metadata mínima después del registro exitoso
+      try {
+        await supabase.auth.updateUser({ 
+          data: { 
+            full_name: data.name, 
+            role: data.role,
+            ...(data.phone && { phone: data.phone }),
+            ...(data.role === 'business' && data.businessName && { business_name: data.businessName }),
+            ...(data.role === 'business' && data.businessDescription && { business_description: data.businessDescription }),
+            ...(data.role === 'business' && data.businessAddress && { business_address: data.businessAddress }),
+            ...(data.role === 'business' && data.businessWebsite && { business_website: data.businessWebsite })
+          } 
+        });
+        console.log('✅ User metadata updated successfully');
+      } catch (metadataError) {
+        console.warn('⚠️ Could not update user metadata, but registration was successful:', metadataError);
+      }
+
       console.log('✅ Registration successful!');
       console.log('📧 Verification email sent to:', data.email);
       console.log('👤 User ID:', authData.user.id);
-      console.log('🏷️ Role:', data.role);
-      console.log('🔧 Trigger will create user_profiles entry automatically');
-
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return true;
     } catch (error) {
@@ -290,36 +320,79 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  const verifyEmail = async (token: string): Promise<boolean> => {
+  const checkVerificationStatus = async (): Promise<{ emailVerified: boolean; profileVerified: boolean; profile?: UserProfile }> => {
     try {
-      // Supabase handles email verification automatically when user clicks the link
-      // We just need to check if the current session is valid
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Email verification error:', error);
-        return false;
+        console.error('Error getting session:', error);
+        return { emailVerified: false, profileVerified: false };
       }
 
-      // If we have a session, the email was verified successfully
-      if (session?.user) {
-        return true;
+      const emailVerified = Boolean(session?.user?.email_confirmed_at);
+      
+      if (!session?.user || !emailVerified) {
+        return { emailVerified, profileVerified: false };
       }
 
-      return false;
+      // Check if profile exists and is verified
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
     } catch (error) {
       console.error('Email verification error:', error);
       return false;
     }
   };
 
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          console.log('⚠️ Profile not found, may still be creating...');
+          return { emailVerified, profileVerified: false };
+        }
+        console.error('Error loading profile:', profileError);
+  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        console.error('No session found for profile update');
+        return false;
+      }
+        return { emailVerified, profileVerified: false };
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', session.user.id);
+      }
+      if (error) {
+        console.error('Error updating profile:', error);
+        return false;
+      }
   return {
+      console.log('✅ Profile updated successfully');
+      // Reload the profile to get updated data
+      const emailVerified = Boolean(session.user.email_confirmed_at);
+      await loadUserProfile(session.user.id, emailVerified);
+      return true;
+    } catch (error) {
+      console.error('Error in updateUserProfile:', error);
+      return false;
+    }
+  };
     ...authState,
     login,
     getRoleBasedRedirectPath,
+      const profileVerified = Boolean(profile?.is_verified);
+      return { emailVerified, profileVerified, profile };
     register,
-    logout,
-    resendVerification,
-    verifyEmail
+      console.error('Error checking verification status:', error);
+      return { emailVerified: false, profileVerified: false };
+    checkVerificationStatus,
+    updateUserProfile
   };
 };

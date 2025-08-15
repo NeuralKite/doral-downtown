@@ -171,43 +171,88 @@ function RegisterPage() {
 
         {/* Registration Form */}
         <div className="bg-white rounded-2xl shadow-md p-8">
-          {/* Account Type Toggle */}
+          {/* Account Type Selection */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Type</h3>
-            <div className="flex bg-gray-100 rounded-xl p-1">
-              <button
-                type="button"
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">What type of account would you like?</h3>
+            
+            <div className="space-y-4">
+              {/* Personal Account Option */}
+              <div 
                 onClick={() => setSelectedRole('user')}
-                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                className={`relative p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
                   selectedRole === 'user'
-                    ? 'bg-white text-brand-primary shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'border-brand-primary bg-brand-primary/5 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <User className="h-5 w-5" />
-                <span className="font-medium">Personal</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole('business')}
-                className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
-                  selectedRole === 'business'
-                    ? 'bg-white text-brand-primary shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Building className="h-5 w-5" />
-                <span className="font-medium">Business</span>
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 mt-2">
-              {selectedRole === 'user' 
-                ? 'Explore and discover amazing places in Doral'
-                : 'Manage your business listings and connect with customers'
-              }
-            </p>
-          </div>
+                <div className="flex items-start space-x-4">
+                  <div className={`p-3 rounded-lg ${
+                    selectedRole === 'user' ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={`text-lg font-semibold mb-2 ${
+                      selectedRole === 'user' ? 'text-brand-primary' : 'text-gray-900'
+                    }`}>
+                      Personal Account
+                    </h4>
+                    <p className="text-gray-600 text-sm">
+                      Perfect for residents and visitors who want to explore and discover amazing places in Doral. 
+                      Save favorites, write reviews, and stay updated with local events.
+                    </p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    selectedRole === 'user' 
+                      ? 'border-brand-primary bg-brand-primary' 
+                      : 'border-gray-300'
+                  }`}>
+                    {selectedRole === 'user' && (
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
+              {/* Business Account Option */}
+              <div 
+                onClick={() => setSelectedRole('business')}
+                className={`relative p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                  selectedRole === 'business'
+                    ? 'border-blue-500 bg-blue-50 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                }`}
+              >
+                <div className="flex items-start space-x-4">
+                  <div className={`p-3 rounded-lg ${
+                    selectedRole === 'business' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    <Building className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className={`text-lg font-semibold mb-2 ${
+                      selectedRole === 'business' ? 'text-blue-600' : 'text-gray-900'
+                    }`}>
+                      Business Account
+                    </h4>
+                    <p className="text-gray-600 text-sm">
+                      Ideal for business owners who want to showcase their services, manage listings, 
+                      connect with customers, and promote events in the Doral community.
+                    </p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                    selectedRole === 'business' 
+                      ? 'border-blue-500 bg-blue-500' 
+                      : 'border-gray-300'
+                  }`}>
+                    {selectedRole === 'business' && (
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
             {/* Error/Success Messages */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
