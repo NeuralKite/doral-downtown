@@ -32,7 +32,7 @@ const CategoryCards: React.FC<CategoryCardsProps> = ({ onCategorySelect }) => {
             <div
               key={category.id}
               onClick={() => onCategorySelect(category.id)}
-              className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-1"
+              className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-1"
             >
               <div className="p-6 text-center">
                 <div 
@@ -64,12 +64,6 @@ const CategoryCards: React.FC<CategoryCardsProps> = ({ onCategorySelect }) => {
                       +{category.subcategories.length - 3} more
                     </span>
                   )}
-                </div>
-                
-                <div className="pt-4 border-t border-gray-100">
-                  <button className="w-full bg-brand-primary/10 text-brand-primary py-2 rounded-lg hover:bg-brand-primary hover:text-white transition-colors font-medium text-sm">
-                    Explore {t(category.id)}
-                  </button>
                 </div>
               </div>
               

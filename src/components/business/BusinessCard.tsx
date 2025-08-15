@@ -28,7 +28,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
 
   return (
     <Card 
-      className="cursor-pointer group overflow-hidden"
+      className="cursor-pointer group overflow-hidden bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
       hover
       onClick={() => onViewDetails(business.id)}
     >
@@ -36,20 +36,20 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         <img 
           src={business.image} 
           alt={business.name}
-          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         
         {onToggleFavorite && (
           <button 
             onClick={handleFavorite}
-            className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
+            className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors"
           >
             <Heart className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500`} />
           </button>
         )}
         
         {isVerified && (
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-4 left-4">
             <div className="flex items-center space-x-1 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
               <CheckCircle className="h-3 w-3" />
               <span>Verified</span>
@@ -58,7 +58,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         )}
         
         {business.rating && (
-          <div className="absolute bottom-3 left-3 bg-white px-2 py-1 rounded-full flex items-center space-x-1">
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center space-x-1 shadow-md">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="text-sm font-medium">{business.rating}</span>
             <span className="text-xs text-gray-500">({business.reviews})</span>
@@ -116,9 +116,9 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         <div className="mt-4 pt-4 border-t border-gray-100">
           <Button 
             fullWidth
-            variant={business.subcategory === 'restaurants' ? 'primary' : 'outline'}
+            className="bg-brand-primary text-white hover:bg-brand-primary/90 transition-colors"
           >
-            {business.subcategory === 'restaurants' ? 'Make Reservation' : t('get_directions')}
+            {business.subcategory === 'restaurants' ? 'View Details' : 'View Details'}
           </Button>
         </div>
       </div>
