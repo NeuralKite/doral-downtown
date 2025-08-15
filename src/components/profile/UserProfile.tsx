@@ -31,11 +31,28 @@ const UserProfile: React.FC = () => {
     business_website: user?.business_website || ''
   });
 
-  // Show simple loading only if still checking auth
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        phone: user.phone || '',
+        business_name: user.business_name || '',
+        business_description: user.business_description || '',
+        business_address: user.business_address || '',
+        business_website: user.business_website || ''
+      });
+    }
+  }, [user]);
+
+  // Show loading only while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto mb-2"></div>
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
       </div>
     );
   }

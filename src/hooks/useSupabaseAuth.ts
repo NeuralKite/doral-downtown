@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase, UserProfile } from '../lib/supabase';
 import { UserRole } from '../types'; 
-import { RegisterData } from '../routes/auth/register';
+
+interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+  role: UserRole;
+  phone?: string;
+  businessName?: string;
+  businessDescription?: string;
+  businessAddress?: string;
+  businessWebsite?: string;
+}
 
 interface AuthState {
   user: UserProfile | null;
@@ -49,6 +60,8 @@ export const useSupabaseAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
+      console.log('Auth state changed:', event);
+
       if (session?.user) {
         await loadUserProfile(session.user.id);
       } else {
@@ -75,6 +88,7 @@ export const useSupabaseAuth = () => {
         .single();
 
       if (error || !profile) {
+        console.error('Profile error:', error);
         setAuthState({
           user: null,
           isLoading: false,
@@ -89,7 +103,7 @@ export const useSupabaseAuth = () => {
         isAuthenticated: true
       });
     } catch (error) {
-      console.error('Profile error:', error);
+      console.error('Profile loading error:', error);
       setAuthState({
         user: null,
         isLoading: false,
@@ -100,14 +114,29 @@ export const useSupabaseAuth = () => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      return !error && !!data.user;
+      if (error) {
+        console.error('Login error:', error);
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
+
+      if (data.user) {
+        // El perfil se cargará automáticamente por el listener onAuthStateChange
+        return true;
+      }
+
+      setAuthState(prev => ({ ...prev, isLoading: false }));
+      return false;
     } catch (error) {
       console.error('Login error:', error);
+      setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
   };
@@ -141,6 +170,11 @@ export const useSupabaseAuth = () => {
   const logout = async () => {
     try {
       await supabase.auth.signOut();
+      setAuthState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false
+      });
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -159,28 +193,6 @@ export const useSupabaseAuth = () => {
       return !error;
     } catch (error) {
       return false;
-    }
-  };
-
-  const checkVerificationStatus = async (): Promise<{ emailVerified: boolean; profileVerified: boolean; profile?: UserProfile }> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const emailVerified = Boolean(session?.user?.email_confirmed_at);
-      
-      if (!session?.user || !emailVerified) {
-        return { emailVerified, profileVerified: false };
-      }
-
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-
-      const profileVerified = Boolean(profile?.is_verified);
-      return { emailVerified, profileVerified, profile };
-    } catch (error) {
-      return { emailVerified: false, profileVerified: false };
     }
   };
 
@@ -207,13 +219,17 @@ export const useSupabaseAuth = () => {
     }
   };
 
+  const getRoleBasedRedirectPath = (role: UserRole): string => {
+    return '/profile'; // Todos van a profile, pero ven diferentes dashboards según su rol
+  };
+
   return {
     ...authState,
     login,
     register,
     logout,
     resendVerification,
-    checkVerificationStatus,
-    updateProfile
+    updateProfile,
+    getRoleBasedRedirectPath
   };
 };

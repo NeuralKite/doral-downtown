@@ -70,15 +70,12 @@ function LoginPage() {
       if (result) {
         setSuccess('Login successful!');
         
-        // Redirect immediately after successful login
-        setTimeout(() => {
-          if (redirect) {
-            navigate({ to: redirect as any });
-          } else {
-            // Let the auth system handle the redirect to home
-            navigate({ to: '/' });
-          }
-        }, 500);
+        // Redirect after successful login
+        if (redirect) {
+          navigate({ to: redirect as any });
+        } else {
+          navigate({ to: '/' });
+        }
       } else {
         setError('Invalid email or password. Please check your credentials and try again.');
       }

@@ -166,12 +166,14 @@ const Header: React.FC<HeaderProps> = ({
             />
 
             {/* CTA Button */}
-            <button 
-              onClick={ctaButton.action}
-              className="bg-white text-brand-primary px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-sm"
-            >
-              {ctaButton.text}
-            </button>
+            {!isAuthenticated && (
+              <button 
+                onClick={ctaButton.action}
+                className="bg-white text-brand-primary px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors font-medium shadow-sm"
+              >
+                {ctaButton.text}
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}

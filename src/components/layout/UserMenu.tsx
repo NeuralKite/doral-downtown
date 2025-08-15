@@ -91,12 +91,12 @@ const UserMenu: React.FC<UserMenuProps> = ({
   };
 
   const authenticatedItems = [
-    ...(user.role === 'user' ? [{
-      label: 'Dashboard',
+    {
+      label: 'My Profile',
       value: 'profile',
       icon: UserCircle,
       href: '/profile'
-    }] : []),
+    },
     ...(user.role === 'admin' ? [{
       label: 'Admin Dashboard',
       value: 'admin',
@@ -108,12 +108,6 @@ const UserMenu: React.FC<UserMenuProps> = ({
       value: 'business',
       icon: Store,
       href: '/business'
-    }] : []),
-    ...(user.role !== 'user' ? [{
-      label: 'My Profile',
-      value: 'profile',
-      icon: UserCircle,
-      href: '/profile'
     }] : []),
     {
       label: t('settings'),
