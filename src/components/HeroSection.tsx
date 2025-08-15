@@ -2,13 +2,31 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
 
-const HeroSection: React.FC = () => {
+interface HeroSectionProps {
+  onSearch?: (query: string) => void;
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ onSearch }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery.trim());
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    // Búsqueda en tiempo real después de 2 caracteres
+    if (value.length >= 2 && onSearch) {
+      onSearch(value.trim());
+    } else if (value.length === 0 && onSearch) {
+      onSearch(''); // Limpiar resultados
+    }
   };
 
   return (
@@ -54,7 +72,7 @@ const HeroSection: React.FC = () => {
                   type="text"
                   placeholder="What are you looking for in Doral today?"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleInputChange}
                   className="flex-1 py-4 text-gray-900 placeholder-gray-500 focus:outline-none text-lg bg-transparent"
                 />
               </div>
