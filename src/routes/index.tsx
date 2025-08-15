@@ -11,6 +11,7 @@ import BusinessDetail from '../components/BusinessDetail';
 import NewsDetail from '../components/NewsDetail';
 import SearchResults from '../components/SearchResults';
 import TestimonialsSection from '../components/TestimonialsSection';
+import Newsletter from '../components/Newsletter';
 import { businesses } from '../data/mockData';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
