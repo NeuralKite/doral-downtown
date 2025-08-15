@@ -73,17 +73,23 @@ function LoginPage() {
         // D) Guard de rutas / navegación tras login
         // Esperar un momento para que el auth state se actualice
         setTimeout(() => {
-          // Si está autenticado pero no tiene perfil completo
-          if (user === null) {
-            console.log('🔄 Redirecting to onboarding - no profile found');
-            navigate({ to: '/profile' }); // Por ahora redirigir a profile para completar datos
+          // Verificar el estado actual de autenticación
+          const { isAuthenticated, user: currentUser } = authState;
+          
+          if (isAuthenticated) {
+            if (!currentUser) {
+              console.log('🔄 Redirecting to profile - no profile found, needs onboarding');
+              navigate({ to: '/profile' });
+            } else {
+              // Si tiene perfil completo, redirigir según rol
+              const targetPath = redirect || getRoleBasedRedirectPath(currentUser.role || 'user');
+              console.log('🔄 Redirecting to:', targetPath, 'for role:', currentUser.role);
+              navigate({ to: targetPath as any });
+            }
           } else {
-            // Si tiene perfil completo, redirigir según rol
-            const targetPath = redirect || getRoleBasedRedirectPath(user.role || 'user');
-            console.log('🔄 Redirecting to:', targetPath);
-            navigate({ to: targetPath as any });
+            console.log('🔄 Not authenticated, staying on login');
           }
-        }, 1000);
+        }, 1500); // Dar más tiempo para que se actualice el estado
       } else {
         setError('Invalid email or password. Please check your credentials and try again.');
       }

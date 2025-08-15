@@ -295,12 +295,16 @@ export const useSupabaseAuth = () => {
   };
 
   const getRoleBasedRedirectPath = (role: UserRole): string => {
+    console.log('🎯 Getting redirect path for role:', role);
     switch (role) {
       case 'admin':
+        console.log('🎯 Redirecting admin to /admin');
         return '/admin';
       case 'business':
+        console.log('🎯 Redirecting business to /business');
         return '/business';
       default:
+        console.log('🎯 Redirecting user to /profile');
         return '/profile';
     }
   };
