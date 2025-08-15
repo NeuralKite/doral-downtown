@@ -70,11 +70,13 @@ const EventsSection: React.FC = () => {
                 <div className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-100 max-w-4xl mx-auto">
                   <div className="md:flex">
                     <div className="md:w-1/2 relative">
-                      <img 
+                      <div className="relative overflow-hidden h-64 md:h-full">
+                        <img 
                         src={event.image} 
                         alt={event.title}
-                        className="w-full h-64 md:h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
+                      </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       
                       <div className="absolute top-4 left-4">

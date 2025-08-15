@@ -18,10 +18,24 @@ import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 
 const UserProfile: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useSupabaseAuth();
+  const { user, updateProfile } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    phone: user?.phone || '',
+    business_name: user?.business_name || '',
+    business_description: user?.business_description || '',
+    business_address: user?.business_address || '',
+    business_website: user?.business_website || ''
+  });
 
+  const handleSaveProfile = async () => {
+    const success = await updateProfile(formData);
+    if (success) {
+      setIsEditing(false);
+    }
+  };
   // Mock data - in real app this would come from API
   const userStats = {
     favoriteBusinesses: 12,
@@ -57,9 +71,23 @@ const UserProfile: React.FC = () => {
   const renderProfile = () => (
     <div className="space-y-6">
       {/* Welcome Message */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl p-6">
-        <h2 className="text-2xl font-bold mb-2">Welcome, {user?.name}!</h2>
-        <p className="text-green-100">Manage your profile, favorites, and discover amazing places in Doral.</p>
+      <div className={`text-white rounded-2xl p-6 ${
+        user?.role === 'admin' ? 'bg-gradient-to-r from-red-500 to-red-600' :
+        user?.role === 'business' ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
+        'bg-gradient-to-r from-green-500 to-green-600'
+      }`}>
+        <h2 className="text-2xl font-bold mb-2">
+          Welcome, {user?.name}!
+        </h2>
+        <p className={`${
+          user?.role === 'admin' ? 'text-red-100' :
+          user?.role === 'business' ? 'text-blue-100' :
+          'text-green-100'
+        }`}>
+          {user?.role === 'admin' && 'Manage the entire Doral Downtown platform and community.'}
+          {user?.role === 'business' && 'Manage your business listings, events, and customer interactions.'}
+          {user?.role === 'user' && 'Manage your profile, favorites, and discover amazing places in Doral.'}
+        </p>
       </div>
 
       {/* Profile Header */}
@@ -92,7 +120,7 @@ const UserProfile: React.FC = () => {
               <Button 
                 variant="outline" 
                 icon={Edit}
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
               >
                 {isEditing ? 'Save' : 'Edit Profile'}
               </Button>
@@ -103,10 +131,52 @@ const UserProfile: React.FC = () => {
         {isEditing && (
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Full Name" defaultValue={user?.name} />
-              <Input label="Email" defaultValue={user?.email} />
-              <Input label="Phone" defaultValue={user?.phone || ''} />
-              <Input label="Location" defaultValue="Doral, FL" />
+              <Input 
+                label="Full Name" 
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+              <Input label="Email" value={user?.email} disabled />
+              <Input 
+                label="Phone" 
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              />
+              <Input label="Location" value="Doral, FL" disabled />
+              
+              {user?.role === 'business' && (
+                <>
+                  <Input 
+                    label="Business Name" 
+                    value={formData.business_name}
+                    onChange={(e) => setFormData({...formData, business_name: e.target.value})}
+                  />
+                  <Input 
+                    label="Business Website" 
+                    value={formData.business_website}
+                    onChange={(e) => setFormData({...formData, business_website: e.target.value})}
+                  />
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Business Description
+                    </label>
+                    <textarea
+                      value={formData.business_description}
+                      onChange={(e) => setFormData({...formData, business_description: e.target.value})}
+                      rows={3}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary"
+                      placeholder="Describe your business..."
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Input 
+                      label="Business Address" 
+                      value={formData.business_address}
+                      onChange={(e) => setFormData({...formData, business_address: e.target.value})}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

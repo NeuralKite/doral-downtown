@@ -11,6 +11,7 @@ import BusinessList from '../components/BusinessList';
 import BusinessDetail from '../components/BusinessDetail';
 import NewsDetail from '../components/NewsDetail';
 import SearchResults from '../components/SearchResults';
+import TestimonialsSection from '../components/TestimonialsSection';
 import { businesses } from '../data/mockData';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
@@ -139,6 +140,7 @@ function Index() {
       <HeroSection onSearch={handleSearch} />
       <CategoryCards onCategorySelect={handleCategorySelect} />
       <FeaturedPlaces onViewDetails={handleViewDetails} />
+      <TestimonialsSection />
       <NewsSection onNewsDetail={handleNewsDetail} />
       <EventsSection />
       <PhotoGallery />

@@ -36,11 +36,11 @@ const FeaturedPlaces: React.FC<FeaturedPlacesProps> = ({ onViewDetails }) => {
               onClick={() => onViewDetails(business.id)}
               className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-1"
             >
-              <div className="relative">
+              <div className="relative overflow-hidden">
                 <img 
                   src={business.image} 
                   alt={business.name}
-                  className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 

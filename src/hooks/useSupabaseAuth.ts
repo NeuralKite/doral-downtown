@@ -17,14 +17,15 @@ export const useSupabaseAuth = () => {
   });
 
   useEffect(() => {
-    // Get initial session
+    let mounted = true;
+
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session?.user) {
+        if (session?.user && mounted) {
           await loadUserProfile(session.user.id);
-        } else {
+        } else if (mounted) {
           setAuthState({
             user: null,
             isLoading: false,
@@ -33,18 +34,21 @@ export const useSupabaseAuth = () => {
         }
       } catch (error) {
         console.error('Session error:', error);
-        setAuthState({
-          user: null,
-          isLoading: false,
-          isAuthenticated: false
-        });
+        if (mounted) {
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false
+          });
+        }
       }
     };
 
     getInitialSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
       if (session?.user) {
         await loadUserProfile(session.user.id);
       } else {
@@ -56,7 +60,10 @@ export const useSupabaseAuth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadUserProfile = async (userId: string) => {
@@ -98,11 +105,7 @@ export const useSupabaseAuth = () => {
         password
       });
 
-      if (error || !data.user) {
-        return false;
-      }
-
-      return true;
+      return !error && !!data.user;
     } catch (error) {
       console.error('Login error:', error);
       return false;
@@ -118,16 +121,17 @@ export const useSupabaseAuth = () => {
           emailRedirectTo: `${window.location.origin}/auth/verify-email`,
           data: {
             full_name: data.name,
-            role: data.role
+            role: data.role,
+            phone: data.phone || '',
+            business_name: data.businessName || '',
+            business_description: data.businessDescription || '',
+            business_address: data.businessAddress || '',
+            business_website: data.businessWebsite || ''
           }
         }
       });
 
-      if (authError || !authData.user) {
-        return false;
-      }
-
-      return true;
+      return !authError && !!authData.user;
     } catch (error) {
       console.error('Registration error:', error);
       return false;
@@ -180,15 +184,26 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  const getRoleBasedRedirectPath = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return '/admin';
-      case 'business':
-        return '/business';
-      case 'user':
-      default:
-        return '/profile';
+  const updateProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    if (!authState.user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(updates)
+        .eq('id', authState.user.id);
+
+      if (!error) {
+        setAuthState(prev => ({
+          ...prev,
+          user: prev.user ? { ...prev.user, ...updates } : null
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return false;
     }
   };
 
@@ -199,6 +214,6 @@ export const useSupabaseAuth = () => {
     logout,
     resendVerification,
     checkVerificationStatus,
-    getRoleBasedRedirectPath
+    updateProfile
   };
 };

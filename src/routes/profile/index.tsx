@@ -14,8 +14,7 @@ function ProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-brand-primary border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto"></div>
         </div>
       </div>
     );
@@ -25,14 +24,6 @@ function ProfilePage() {
     return <Navigate to="/auth/login" search={{ redirect: '/profile' }} />;
   }
 
-  // Redirect based on role
-  if (user.role === 'admin') {
-    return <Navigate to="/admin" />;
-  }
-  
-  if (user.role === 'business') {
-    return <Navigate to="/business" />;
-  }
-
+  // Profile is for all users, but shows different content based on role
   return <UserProfile />;
 }

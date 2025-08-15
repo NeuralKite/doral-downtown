@@ -32,11 +32,11 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
       hover
       onClick={() => onViewDetails(business.id)}
     >
-      <div className="relative">
+      <div className="relative overflow-hidden">
         <img 
           src={business.image} 
           alt={business.name}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
         />
         
         {onToggleFavorite && (
