@@ -31,8 +31,9 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
       className="cursor-pointer group overflow-hidden bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
       hover
       onClick={() => onViewDetails(business.id)}
+      padding="none"
     >
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden rounded-t-xl">
         <img 
           src={business.image} 
           alt={business.name}
