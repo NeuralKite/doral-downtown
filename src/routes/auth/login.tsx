@@ -70,14 +70,20 @@ function LoginPage() {
       if (result) {
         setSuccess('Login successful!');
         
-        // Redirect after successful login with a small delay to show success
+        // D) Guard de rutas / navegación tras login
+        // Esperar un momento para que el auth state se actualice
         setTimeout(() => {
-          if (redirect) {
-            navigate({ to: redirect as any });
+          // Si está autenticado pero no tiene perfil completo
+          if (user === null) {
+            console.log('🔄 Redirecting to onboarding - no profile found');
+            navigate({ to: '/profile' }); // Por ahora redirigir a profile para completar datos
           } else {
-            navigate({ to: '/' });
+            // Si tiene perfil completo, redirigir según rol
+            const targetPath = redirect || getRoleBasedRedirectPath(user.role || 'user');
+            console.log('🔄 Redirecting to:', targetPath);
+            navigate({ to: targetPath as any });
           }
-        }, 500);
+        }, 1000);
       } else {
         setError('Invalid email or password. Please check your credentials and try again.');
       }

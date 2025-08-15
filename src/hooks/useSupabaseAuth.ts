@@ -18,14 +18,72 @@ interface AuthState {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  profileVerified?: boolean;
 }
 
 export const useSupabaseAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,
-    isAuthenticated: false
+    isAuthenticated: false,
+    profileVerified: false
   });
+
+  // A) loadUserProfile — no bloquear y no "desloguear" si no hay perfil aún
+  const loadUserProfile = async (userId: string) => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        // PGRST116 = no hay filas; NO tratamos esto como error fatal
+        if ((error as any).code === 'PGRST116') {
+          console.log('📝 No profile found, user needs onboarding');
+          // Marcamos autenticado, pero perfil incompleto
+          setAuthState(prev => ({
+            ...prev,
+            user: null,
+            isLoading: false,
+            isAuthenticated: true,
+            profileVerified: false,
+          }));
+          return;
+        }
+
+        console.warn('⚠️ Profile error (non-blocking):', error);
+        // Otros errores: no bloquees la app
+        setAuthState(prev => ({
+          ...prev,
+          user: null,
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+        return;
+      }
+
+      console.log('✅ Profile loaded successfully:', profile.name);
+      setAuthState(prev => ({
+        ...prev,
+        user: profile,
+        isLoading: false,
+        isAuthenticated: true,
+        profileVerified: Boolean(profile?.is_verified),
+      }));
+    } catch (e) {
+      console.error('❌ Profile loading error (fallback to authenticated):', e);
+      // Fallback: sesión válida => autenticado
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        isAuthenticated: true,
+      }));
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -35,6 +93,7 @@ export const useSupabaseAuth = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user && mounted) {
+          console.log('🔄 Initial session found, loading profile...');
           await loadUserProfile(session.user.id);
         } else if (mounted) {
           setAuthState({
@@ -44,7 +103,7 @@ export const useSupabaseAuth = () => {
           });
         }
       } catch (error) {
-        console.error('Session error:', error);
+        console.error('❌ Session error:', error);
         if (mounted) {
           setAuthState({
             user: null,
@@ -57,19 +116,32 @@ export const useSupabaseAuth = () => {
 
     getInitialSession();
 
+    // C) Listener onAuthStateChange — siempre limpiar isLoading
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      console.log('Auth state change:', event, session?.user?.id);
+      console.log('🔄 Auth state change:', event, session?.user?.id);
 
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
-      } else {
-        setAuthState({
-          user: null,
-          isLoading: false,
-          isAuthenticated: false
-        });
+      try {
+        if (session?.user) {
+          await loadUserProfile(session.user.id);
+        } else {
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+          });
+        }
+      } catch (e) {
+        console.error('❌ Auth state change error:', e);
+        setAuthState(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          isAuthenticated: Boolean(session?.user) 
+        }));
+      } finally {
+        // Pase lo que pase, no te quedes "cargando"
+        setAuthState(prev => ({ ...prev, isLoading: false }));
       }
     });
 
@@ -79,94 +151,51 @@ export const useSupabaseAuth = () => {
     };
   }, []);
 
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Profile error:', error);
-        setAuthState({
-          user: null,
-          isLoading: false,
-          isAuthenticated: false
-        });
-        return;
-      }
-
-      // Si no existe perfil, crear uno básico
-      if (!profile) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const basicProfile = {
-            user_id: userId,
-            email: user.email || '',
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            role: (user.user_metadata?.role as UserRole) || 'user',
-            phone: user.user_metadata?.phone || '',
-            business_name: user.user_metadata?.business_name || '',
-            business_description: user.user_metadata?.business_description || '',
-            business_address: user.user_metadata?.business_address || '',
-            business_website: user.user_metadata?.business_website || '',
-            is_verified: false
-          };
-
-          const { data: newProfile } = await supabase
-            .from('user_profiles')
-            .insert([basicProfile])
-            .select()
-            .single();
-
-          if (newProfile) {
-            setAuthState({
-              user: newProfile,
-              isLoading: false,
-              isAuthenticated: true
-            });
-            return;
-          }
-        }
-      }
-
-      setAuthState({
-        user: profile,
-        isLoading: false,
-        isAuthenticated: true
-      });
-    } catch (error) {
-      console.error('Profile loading error:', error);
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false
-      });
-    }
-  };
-
+  // B) login — limpiar loading y navegar sin depender solo del listener
   const login = async (email: string, password: string): Promise<boolean> => {
+    setAuthState(prev => ({ ...prev, isLoading: true }));
+    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      console.log('🔐 Attempting login for:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
       });
-
-      if (error) {
-        console.error('Login error:', error);
+      
+      if (error || !data.user) {
+        console.error('❌ Login error:', error?.message || 'No user');
+        setAuthState(prev => ({ ...prev, isLoading: false }));
         return false;
       }
 
-      return !!data.user;
-    } catch (error) {
-      console.error('Login error:', error);
+      console.log('✅ Login successful, access_token received');
+      
+      // Carga de perfil en paralelo; no bloquea la UI
+      const userId = data.user.id;
+      loadUserProfile(userId).catch(() => {
+        console.warn('⚠️ Profile loading failed, but login was successful');
+      });
+
+      // Fallback: si en 2s nadie limpió, lo limpiamos aquí
+      setTimeout(() => {
+        setAuthState(prev => ({ 
+          ...prev, 
+          isLoading: false, 
+          isAuthenticated: true 
+        }));
+      }, 2000);
+
+      return true;
+    } catch (e) {
+      console.error('❌ Unexpected login error:', e);
+      setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
   };
 
   const register = async (data: RegisterData): Promise<boolean> => {
     try {
+      console.log('📝 Starting registration for:', data.email);
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -184,18 +213,25 @@ export const useSupabaseAuth = () => {
         }
       });
 
-      return !authError && !!authData.user;
+      if (authError) {
+        console.error('❌ Registration error:', authError);
+        return false;
+      }
+
+      console.log('✅ Registration successful');
+      return !!authData.user;
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('❌ Registration error:', error);
       return false;
     }
   };
 
   const logout = async () => {
     try {
+      console.log('👋 Logging out...');
       await supabase.auth.signOut();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ Logout error:', error);
     }
   };
 
@@ -233,7 +269,7 @@ export const useSupabaseAuth = () => {
       }
       return false;
     } catch (error) {
-      console.error('Update profile error:', error);
+      console.error('❌ Update profile error:', error);
       return false;
     }
   };
@@ -259,7 +295,14 @@ export const useSupabaseAuth = () => {
   };
 
   const getRoleBasedRedirectPath = (role: UserRole): string => {
-    return '/profile';
+    switch (role) {
+      case 'admin':
+        return '/admin';
+      case 'business':
+        return '/business';
+      default:
+        return '/profile';
+    }
   };
 
   return {

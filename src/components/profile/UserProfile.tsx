@@ -48,13 +48,13 @@ const UserProfile: React.FC = () => {
     }
   }, [user]);
 
-  // Show loading screen with timeout
+  // Show loading screen but with shorter timeout
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto mb-2"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">Loading profile...</p>
         </div>
       </div>
     );
@@ -62,6 +62,27 @@ const UserProfile: React.FC = () => {
 
   // Redirect to login if not authenticated
   if (!isAuthenticated || !user) {
+    // Si está autenticado pero no tiene perfil, mostrar mensaje de bienvenida
+    if (isAuthenticated && !user) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-md p-8 text-center">
+            <h2 className="text-2xl font-bold text-brand-primary mb-4">
+              Welcome to Doral Downtown!
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Let's complete your profile to get started.
+            </p>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto mb-2"></div>
+              <p className="text-gray-600">Setting up your profile...</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // Si no está autenticado, redirigir al login
     return <Navigate to="/auth/login" search={{ redirect: '/profile' }} />;
   }
 
