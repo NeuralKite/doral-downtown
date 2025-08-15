@@ -241,12 +241,7 @@ export const useSupabaseAuth = () => {
           emailRedirectTo: `${window.location.origin}/auth/verify-email`,
           data: {
             full_name: data.name,
-            role: data.role,
-            ...(data.phone && { phone: data.phone }),
-            ...(data.role === 'business' && data.businessName && { business_name: data.businessName }),
-            ...(data.role === 'business' && data.businessDescription && { business_description: data.businessDescription }),
-            ...(data.role === 'business' && data.businessAddress && { business_address: data.businessAddress }),
-            ...(data.role === 'business' && data.businessWebsite && { business_website: data.businessWebsite })
+            role: data.role
           }
         }
       });
