@@ -209,16 +209,15 @@ export const useSupabaseAuth = () => {
         name: data.name 
       });
 
-      // Sign up with Supabase Auth with all metadata
+      // Sign up with Supabase Auth - let the trigger handle user_profiles creation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(data.email)}&role=${data.role}`,
           data: {
-            name: data.name,
+            full_name: data.name, // Use full_name as expected by trigger
             role: data.role,
-            full_name: data.name, // Asegurar compatibilidad con el trigger
             ...(data.phone && { phone: data.phone }),
             ...(data.role === 'business' && data.businessName && { business_name: data.businessName }),
             ...(data.role === 'business' && data.businessDescription && { business_description: data.businessDescription }),
@@ -245,6 +244,7 @@ export const useSupabaseAuth = () => {
       console.log('📧 Verification email sent to:', data.email);
       console.log('👤 User ID:', authData.user.id);
       console.log('🏷️ Role:', data.role);
+      console.log('🔧 Trigger will create user_profiles entry automatically');
 
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return true;
@@ -252,16 +252,6 @@ export const useSupabaseAuth = () => {
       console.error('❌ Registration error:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
-    }
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.auth.updateUser({
-          data: { name, full_name: name }
-        });
-      }
-    } catch (error) {
-      console.error('Error updating display name:', error);
     }
   };
 
