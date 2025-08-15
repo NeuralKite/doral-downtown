@@ -60,6 +60,8 @@ export const useSupabaseAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
+      console.log('Auth state change:', event, session?.user?.id);
+
       if (session?.user) {
         await loadUserProfile(session.user.id);
       } else {
@@ -79,29 +81,54 @@ export const useSupabaseAuth = () => {
 
   const loadUserProfile = async (userId: string) => {
     try {
-      // Set loading state but don't block UI
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-      
       const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Profile error:', error);
-        // If profile doesn't exist, create a basic one
-        if (error.code === 'PGRST116') {
-          await createBasicProfile(userId);
-          return;
-        }
-        
         setAuthState({
           user: null,
           isLoading: false,
           isAuthenticated: false
         });
         return;
+      }
+
+      // Si no existe perfil, crear uno básico
+      if (!profile) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const basicProfile = {
+            user_id: userId,
+            email: user.email || '',
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            role: (user.user_metadata?.role as UserRole) || 'user',
+            phone: user.user_metadata?.phone || '',
+            business_name: user.user_metadata?.business_name || '',
+            business_description: user.user_metadata?.business_description || '',
+            business_address: user.user_metadata?.business_address || '',
+            business_website: user.user_metadata?.business_website || '',
+            is_verified: false
+          };
+
+          const { data: newProfile } = await supabase
+            .from('user_profiles')
+            .insert([basicProfile])
+            .select()
+            .single();
+
+          if (newProfile) {
+            setAuthState({
+              user: newProfile,
+              isLoading: false,
+              isAuthenticated: true
+            });
+            return;
+          }
+        }
       }
 
       setAuthState({
@@ -119,42 +146,6 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  const createBasicProfile = async (userId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const basicProfile = {
-        user_id: userId,
-        email: user.email || '',
-        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-        role: user.user_metadata?.role || 'user',
-        phone: user.user_metadata?.phone || '',
-        business_name: user.user_metadata?.business_name || '',
-        business_description: user.user_metadata?.business_description || '',
-        business_address: user.user_metadata?.business_address || '',
-        business_website: user.user_metadata?.business_website || '',
-        is_verified: false
-      };
-
-      const { data: newProfile, error } = await supabase
-        .from('user_profiles')
-        .insert([basicProfile])
-        .select()
-        .single();
-
-      if (!error && newProfile) {
-        setAuthState({
-          user: newProfile,
-          isLoading: false,
-          isAuthenticated: true
-        });
-      }
-    } catch (error) {
-      console.error('Error creating basic profile:', error);
-    }
-  };
-
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -167,12 +158,7 @@ export const useSupabaseAuth = () => {
         return false;
       }
 
-      if (data.user) {
-        // El perfil se cargará automáticamente por el listener onAuthStateChange
-        return true;
-      }
-
-      return false;
+      return !!data.user;
     } catch (error) {
       console.error('Login error:', error);
       return false;
@@ -208,11 +194,6 @@ export const useSupabaseAuth = () => {
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false
-      });
     } catch (error) {
       console.error('Logout error:', error);
     }

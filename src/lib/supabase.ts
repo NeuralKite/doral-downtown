@@ -61,17 +61,6 @@ const initializeStorage = async () => {
 // Initialize storage on app start
 initializeStorage();
 
-// Add error handler for auth errors
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'TOKEN_REFRESHED') {
-    console.log('🔄 Token refreshed successfully');
-  } else if (event === 'SIGNED_OUT') {
-    console.log('🚪 User signed out');
-    // Clear any remaining session data
-    localStorage.removeItem('sb-jrtncjdputyorrxxfmvo-auth-token');
-  }
-});
-
 // Database types
 export interface UserProfile {
   id: string;
