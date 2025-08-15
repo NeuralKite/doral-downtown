@@ -79,14 +79,23 @@ export const useSupabaseAuth = () => {
 
   const loadUserProfile = async (userId: string) => {
     try {
+      // Set loading state but don't block UI
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+      
       const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
 
-      if (error || !profile) {
+      if (error) {
         console.error('Profile error:', error);
+        // If profile doesn't exist, create a basic one
+        if (error.code === 'PGRST116') {
+          await createBasicProfile(userId);
+          return;
+        }
+        
         setAuthState({
           user: null,
           isLoading: false,
@@ -107,6 +116,42 @@ export const useSupabaseAuth = () => {
         isLoading: false,
         isAuthenticated: false
       });
+    }
+  };
+
+  const createBasicProfile = async (userId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const basicProfile = {
+        user_id: userId,
+        email: user.email || '',
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+        role: user.user_metadata?.role || 'user',
+        phone: user.user_metadata?.phone || '',
+        business_name: user.user_metadata?.business_name || '',
+        business_description: user.user_metadata?.business_description || '',
+        business_address: user.user_metadata?.business_address || '',
+        business_website: user.user_metadata?.business_website || '',
+        is_verified: false
+      };
+
+      const { data: newProfile, error } = await supabase
+        .from('user_profiles')
+        .insert([basicProfile])
+        .select()
+        .single();
+
+      if (!error && newProfile) {
+        setAuthState({
+          user: newProfile,
+          isLoading: false,
+          isAuthenticated: true
+        });
+      }
+    } catch (error) {
+      console.error('Error creating basic profile:', error);
     }
   };
 

@@ -32,6 +32,35 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Initialize storage bucket for user avatars
+const initializeStorage = async () => {
+  try {
+    // Check if bucket exists
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
+    
+    if (!avatarBucket) {
+      // Create avatars bucket
+      const { error } = await supabase.storage.createBucket('avatars', {
+        public: true,
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+        fileSizeLimit: 5242880 // 5MB
+      });
+      
+      if (error) {
+        console.error('Error creating avatars bucket:', error);
+      } else {
+        console.log('✅ Avatars bucket created successfully');
+      }
+    }
+  } catch (error) {
+    console.error('Storage initialization error:', error);
+  }
+};
+
+// Initialize storage on app start
+initializeStorage();
+
 // Add error handler for auth errors
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'TOKEN_REFRESHED') {

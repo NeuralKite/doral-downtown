@@ -17,12 +17,14 @@ import {
 } from 'lucide-react';
 import { Card, Button, Input } from '../ui';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import AvatarUpload from './AvatarUpload';
 
 const UserProfile: React.FC = () => {
   const { t } = useTranslation();
   const { user, updateProfile, isAuthenticated, isLoading } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -52,7 +54,8 @@ const UserProfile: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto mb-2"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-gray-600">Loading your profile...</p>
+          <p className="text-sm text-gray-500 mt-2">Setting up your account...</p>
         </div>
       </div>
     );
@@ -64,9 +67,18 @@ const UserProfile: React.FC = () => {
   }
 
   const handleSaveProfile = async () => {
+    setIsSaving(true);
     const success = await updateProfile(formData);
     if (success) {
       setIsEditing(false);
+    }
+    setIsSaving(false);
+  };
+
+  const handleAvatarChange = async (newAvatarUrl: string) => {
+    const success = await updateProfile({ avatar_url: newAvatarUrl });
+    if (!success) {
+      console.error('Failed to update avatar URL');
     }
   };
   // Mock data - in real app this would come from API
@@ -127,14 +139,11 @@ const UserProfile: React.FC = () => {
       <Card className="p-6">
         <div className="flex items-center space-x-6">
           <div className="relative">
-            <img 
-              src={user?.avatar_url || 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1'}
-              alt={user?.name}
-              className="w-24 h-24 rounded-full object-cover"
+            <AvatarUpload
+              currentAvatar={user?.avatar_url}
+              onAvatarChange={handleAvatarChange}
+              size="lg"
             />
-            <button className="absolute bottom-0 right-0 p-2 bg-brand-primary text-white rounded-full hover:bg-brand-primary/90 transition-colors">
-              <Camera className="h-4 w-4" />
-            </button>
           </div>
           
           <div className="flex-1">
@@ -153,9 +162,10 @@ const UserProfile: React.FC = () => {
               <Button 
                 variant="outline" 
                 icon={Edit}
+                loading={isSaving}
                 onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
               >
-                {isEditing ? 'Save' : 'Edit Profile'}
+                {isSaving ? 'Saving...' : isEditing ? 'Save' : 'Edit Profile'}
               </Button>
             </div>
           </div>
