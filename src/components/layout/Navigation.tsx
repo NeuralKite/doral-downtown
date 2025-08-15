@@ -84,42 +84,7 @@ const Navigation: React.FC<NavigationProps> = ({
 
   // Role-specific navigation items
   const getRoleSpecificItems = (): NavigationItem[] => {
-    if (!isAuthenticated || !user) return [];
-
-    switch (user.role) {
-      case 'admin':
-        return [
-          {
-            id: 'admin-dashboard',
-            label: 'Admin Panel',
-            icon: Shield,
-            href: '/admin',
-            isActive: location.pathname.startsWith('/admin')
-          }
-        ];
-      case 'business':
-        return [
-          {
-            id: 'dashboard',
-            label: 'Dashboard',
-            icon: Store,
-            href: '/business',
-            isActive: location.pathname.startsWith('/business')
-          }
-        ];
-      case 'user':
-        return [
-          {
-            id: 'profile',
-            label: 'My Profile',
-            icon: User,
-            href: '/profile',
-            isActive: location.pathname.startsWith('/profile')
-          }
-        ];
-      default:
-        return [];
-    }
+    return [];
   };
 
   const navigationItems = [...baseNavigationItems, ...getRoleSpecificItems()];

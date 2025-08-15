@@ -144,11 +144,6 @@ const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* User Menu */}
-            {isAuthenticated && user && (
-              <RoleIndicator role={user.role} />
-            )}
-            
             {/* Notifications (for authenticated users) */}
             {isAuthenticated && (
               <button className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10 relative" title="Notifications">
