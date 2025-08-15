@@ -341,58 +341,64 @@ export const useSupabaseAuth = () => {
         .select('*')
         .eq('user_id', session.user.id)
         .single();
-    } catch (error) {
-      console.error('Email verification error:', error);
-      return false;
-    }
-  };
 
-      if (profileError) {
-        if (profileError.code === 'PGRST116') {
-          console.log('⚠️ Profile not found, may still be creating...');
-          return { emailVerified, profileVerified: false };
-        }
-        console.error('Error loading profile:', profileError);
-  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        console.error('No session found for profile update');
-        return false;
-      }
-        return { emailVerified, profileVerified: false };
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', session.user.id);
-      }
-      if (error) {
-        console.error('Error updating profile:', error);
-        return false;
-      }
-  return {
-      console.log('✅ Profile updated successfully');
-      // Reload the profile to get updated data
-      const emailVerified = Boolean(session.user.email_confirmed_at);
-      await loadUserProfile(session.user.id, emailVerified);
-      return true;
-    } catch (error) {
-      console.error('Error in updateUserProfile:', error);
-      return false;
-    }
-  };
-    ...authState,
-    login,
-    getRoleBasedRedirectPath,
-      const profileVerified = Boolean(profile?.is_verified);
-      return { emailVerified, profileVerified, profile };
-    register,
-      console.error('Error checking verification status:', error);
-      return { emailVerified: false, profileVerified: false };
-    checkVerificationStatus,
-    updateUserProfile
-  };
+       if (profileError) {
+         if (profileError.code === 'PGRST116') {
+           console.log('⚠️ Profile not found, may still be creating...');
+           return { emailVerified, profileVerified: false };
+         }
+         console.error('Error loading profile:', profileError);
+         return { emailVerified, profileVerified: false };
+       }
+ 
+       const profileVerified = Boolean(profile?.is_verified);
+       return { emailVerified, profileVerified, profile };
+     } catch (error) {
+       console.error('Error checking verification status:', error);
+       return { emailVerified: false, profileVerified: false };
+     }
+   };
+ 
+   const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+     try {
+       const { data: { session } } = await supabase.auth.getSession();
+       if (!session?.user) {
+         console.error('No session found for profile update');
+         return false;
+       }
+ 
+       const { error } = await supabase
+         .from('user_profiles')
+         .update({
+           ...updates,
+           updated_at: new Date().toISOString()
+         })
+         .eq('user_id', session.user.id);
+ 
+       if (error) {
+         console.error('Error updating profile:', error);
+         return false;
+       }
+ 
+       console.log('✅ Profile updated successfully');
+       // Reload the profile to get updated data
+       const emailVerified = Boolean(session.user.email_confirmed_at);
+       await loadUserProfile(session.user.id, emailVerified);
+       return true;
+     } catch (error) {
+       console.error('Error in updateUserProfile:', error);
+       return false;
+     }
+   };
+ 
+   return {
+     ...authState,
+     login,
+     getRoleBasedRedirectPath,
+     register,
+     logout,
+     resendVerification,
+     checkVerificationStatus,
+     updateUserProfile
+   };
 };
