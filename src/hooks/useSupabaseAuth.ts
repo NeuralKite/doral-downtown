@@ -60,8 +60,6 @@ export const useSupabaseAuth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      console.log('Auth state changed:', event);
-
       if (session?.user) {
         await loadUserProfile(session.user.id);
       } else {
@@ -114,8 +112,6 @@ export const useSupabaseAuth = () => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -123,7 +119,6 @@ export const useSupabaseAuth = () => {
 
       if (error) {
         console.error('Login error:', error);
-        setAuthState(prev => ({ ...prev, isLoading: false }));
         return false;
       }
 
@@ -132,11 +127,9 @@ export const useSupabaseAuth = () => {
         return true;
       }
 
-      setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      setAuthState(prev => ({ ...prev, isLoading: false }));
       return false;
     }
   };
@@ -219,8 +212,28 @@ export const useSupabaseAuth = () => {
     }
   };
 
+  const checkVerificationStatus = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      return { emailVerified: false, profileVerified: false, profile: null };
+    }
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .single();
+
+    return {
+      emailVerified: !!session.user.email_confirmed_at,
+      profileVerified: !!profile,
+      profile
+    };
+  };
+
   const getRoleBasedRedirectPath = (role: UserRole): string => {
-    return '/profile'; // Todos van a profile, pero ven diferentes dashboards según su rol
+    return '/profile';
   };
 
   return {
@@ -230,6 +243,7 @@ export const useSupabaseAuth = () => {
     logout,
     resendVerification,
     updateProfile,
+    checkVerificationStatus,
     getRoleBasedRedirectPath
   };
 };
