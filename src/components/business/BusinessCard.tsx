@@ -36,13 +36,16 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         <img 
           src={business.image} 
           alt={business.name}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
         />
+        
+        {/* Gradient overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {onToggleFavorite && (
           <button 
             onClick={handleFavorite}
-            className="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-colors"
+            className="absolute top-4 right-4 p-2 bg-white/95 backdrop-blur-md rounded-full shadow-xl hover:bg-white hover:scale-110 transition-all duration-200"
           >
             <Heart className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-600'} hover:text-red-500`} />
           </button>
@@ -50,7 +53,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         
         {isVerified && (
           <div className="absolute top-4 left-4">
-            <div className="flex items-center space-x-1 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+            <div className="flex items-center space-x-1 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
               <CheckCircle className="h-3 w-3" />
               <span>Verified</span>
             </div>
@@ -59,9 +62,9 @@ const BusinessCard: React.FC<BusinessCardProps> = ({
         
         {business.rating && (
           <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center space-x-1 shadow-md">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
             <span className="text-sm font-medium">{business.rating}</span>
-            <span className="text-xs text-gray-500">({business.reviews})</span>
+            <span className="text-xs text-gray-600">({business.reviews})</span>
           </div>
         )}
       </div>
