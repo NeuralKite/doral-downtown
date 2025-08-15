@@ -23,15 +23,11 @@ export const useSupabaseAuth = () => {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      console.log('🔄 Starting initial session check...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
-          // Clear any stale session data
-          localStorage.removeItem('sb-jrtncjdputyorrxxfmvo-auth-token');
-          sessionStorage.clear();
           setAuthState({
             user: null,
             isLoading: false,
@@ -43,11 +39,9 @@ export const useSupabaseAuth = () => {
         }
         
         if (session?.user) {
-          console.log('✅ Session found, loading profile for user:', session.user.id);
           const emailVerified = Boolean(session.user.email_confirmed_at);
           await loadUserProfile(session.user.id, emailVerified);
         } else {
-          console.log('❌ No session found, user not authenticated');
           setAuthState({
             user: null,
             isLoading: false,
@@ -58,8 +52,6 @@ export const useSupabaseAuth = () => {
         }
       } catch (error) {
         console.error('Unexpected error in getInitialSession:', error);
-        // Clear any corrupted session data
-        localStorage.clear();
         setAuthState({
           user: null,
           isLoading: false,
@@ -75,7 +67,7 @@ export const useSupabaseAuth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
-        console.log('🔄 Auth state changed:', event, session?.user?.id);
+        console.log('Auth state changed:', event);
         
         if (session?.user) {
           const emailVerified = Boolean(session.user.email_confirmed_at);
@@ -106,30 +98,15 @@ export const useSupabaseAuth = () => {
 
   const loadUserProfile = async (userId: string, emailVerified: boolean = false) => {
     try {
-      console.log('📋 Loading user profile for:', userId);
-      
-      // Set loading state
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-      
-      // Add timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile loading timeout')), 30000)
-      );
-      
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
-      
-      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
 
       if (error) {
-        console.error('❌ Error loading user profile:', error.message);
-        
-        // If profile doesn't exist, don't treat it as an error during signup
         if (error.code === 'PGRST116') {
-          console.log('⚠️ User profile not found, user may still be in signup process');
+          console.log('Profile not found, user may still be in signup process');
           setAuthState({
             user: null,
             isLoading: false,
@@ -140,7 +117,7 @@ export const useSupabaseAuth = () => {
           return;
         }
         
-        // For other errors, also set loading to false
+        console.error('Error loading user profile:', error);
         setAuthState({
           user: null,
           isLoading: false,
@@ -151,7 +128,6 @@ export const useSupabaseAuth = () => {
         return;
       }
 
-      console.log('✅ User profile loaded successfully:', profile.name, 'Role:', profile.role);
       setAuthState({
         user: profile,
         isLoading: false,
@@ -160,14 +136,7 @@ export const useSupabaseAuth = () => {
         profileVerified: Boolean(profile?.is_verified)
       });
     } catch (error) {
-      console.error('❌ Unexpected error loading user profile:', error);
-      
-      // Handle timeout specifically
-      if (error instanceof Error && error.message === 'Profile loading timeout') {
-        console.error('❌ Profile loading timed out after 30 seconds');
-      }
-      
-      // Don't leave user in loading state
+      console.error('Unexpected error loading user profile:', error);
       setAuthState({
         user: null,
         isLoading: false,
@@ -180,9 +149,8 @@ export const useSupabaseAuth = () => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
 
-      console.log('🔐 Attempting login for:', email);
+      console.log('Attempting login...');
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -190,23 +158,19 @@ export const useSupabaseAuth = () => {
       });
 
       if (error) {
-        console.error('❌ Login error:', error.message);
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+        console.error('Login error:', error.message);
         return false;
       }
 
       if (!data.user) {
-        console.error('❌ Login error: No user data returned');
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+        console.error('Login error: No user data returned');
         return false;
       }
 
-      console.log('✅ Login successful, auth state will be updated by listener');
-      // Don't set loading to false here, let the auth state change listener handle it
+      console.log('Login successful');
       return true;
     } catch (error) {
-      console.error('❌ Unexpected login error:', error);
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      console.error('Unexpected login error:', error);
       return false;
     }
   };
