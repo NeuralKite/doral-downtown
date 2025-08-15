@@ -1,5 +1,5 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -9,17 +9,6 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 export const Route = createRootRoute({
   component: () => {
     const { user, isAuthenticated, logout, isLoading } = useSupabaseAuth();
-
-    // Simplified loading state
-    if (isLoading) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto"></div>
-          </div>
-        </div>
-      );
-    }
 
     return (
       <ErrorBoundary>
