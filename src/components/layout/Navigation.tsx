@@ -68,7 +68,7 @@ const Navigation: React.FC<NavigationProps> = ({
     },
     {
       id: 'events',
-      label: t('events'),
+      label: t('events_nav'),
       icon: Calendar,
       href: '#events',
       isActive: location.hash === '#events'
