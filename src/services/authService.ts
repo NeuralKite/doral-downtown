@@ -27,6 +27,20 @@ export class AuthService {
         name: data.name
       });
 
+      // Pre-registration check: verify if email already exists in user_profiles
+      const { data: existingProfile, error: existingError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('email', data.email)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('AuthService: Email check failed:', existingError);
+      }
+      if (existingProfile) {
+        throw new Error('Email already registered');
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,

@@ -199,6 +199,22 @@ const useSupabaseAuthInternal = () => {
   const register = async (data: RegisterData): Promise<boolean> => {
     try {
       console.log('📝 Starting registration for:', data.email);
+
+      // Quick email existence check to surface duplicate errors before signUp
+      const { data: existingProfile, error: existingError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('email', data.email)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('❌ Email check failed:', existingError);
+      }
+      if (existingProfile) {
+        console.warn('⚠️ Email already registered, aborting signUp');
+        return false;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
