@@ -35,7 +35,7 @@ const Footer: React.FC = () => {
               <li><a href="#dining" className="text-gray-300 hover:text-white transition-colors">{t('dining')}</a></li>
               <li><a href="#shopping" className="text-gray-300 hover:text-white transition-colors">{t('shopping')}</a></li>
               <li><a href="#living" className="text-gray-300 hover:text-white transition-colors">{t('living')}</a></li>
-              <li><a href="#events" className="text-gray-300 hover:text-white transition-colors">{t('events')}</a></li>
+              <li><a href="#events" className="text-gray-300 hover:text-white transition-colors">{t('events_nav')}</a></li>
             </ul>
           </div>
 

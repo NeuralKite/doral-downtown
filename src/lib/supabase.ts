@@ -32,33 +32,45 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Initialize storage bucket for user avatars
+// Optional service role key for storage initialization (server-side only)
+const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+// Initialize storage bucket for user avatars if service role key is available
 const initializeStorage = async () => {
+  if (!serviceRoleKey) {
+    // Listing buckets requires a service role key, skip when using anon key
+    return;
+  }
+
   try {
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
     // Check if bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
+    const { data: buckets } = await adminClient.storage.listBuckets();
     const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
-    
+
     if (!avatarBucket) {
       // Create avatars bucket
-      const { error } = await supabase.storage.createBucket('avatars', {
+      const { error } = await adminClient.storage.createBucket('avatars', {
         public: true,
         allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
         fileSizeLimit: 5242880 // 5MB
       });
-      
+
       if (error) {
         console.error('Error creating avatars bucket:', error);
-      } else {
+      } else if (import.meta.env.DEV) {
         console.log('✅ Avatars bucket created successfully');
       }
     }
   } catch (error) {
-    console.error('Storage initialization error:', error);
+    if (import.meta.env.DEV) {
+      console.error('Storage initialization error:', error);
+    }
   }
 };
 
-// Initialize storage on app start
+// Initialize storage on app start (no-op without service role key)
 initializeStorage();
 
 // Database types
