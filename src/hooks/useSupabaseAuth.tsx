@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, type ReactNode } from 'react';
 import { supabase, UserProfile } from '../lib/supabase';
-import { UserRole } from '../types'; 
+import { UserRole } from '../types';
 
 interface RegisterData {
   email: string;
@@ -21,7 +21,10 @@ interface AuthState {
   profileVerified?: boolean;
 }
 
-export const useSupabaseAuth = () => {
+// Internal hook that contains the actual authentication logic. This is used by
+// the context provider to ensure a single source of truth is shared across the
+// entire application instead of each component creating its own auth state.
+const useSupabaseAuthInternal = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isLoading: true,
@@ -319,4 +322,28 @@ export const useSupabaseAuth = () => {
     checkVerificationStatus,
     getRoleBasedRedirectPath
   };
+};
+
+// React context to expose the auth API throughout the app.
+const AuthContext = createContext<ReturnType<typeof useSupabaseAuthInternal> | null>(null);
+
+/**
+ * Provider that wraps the application and makes the authentication state
+ * available via `useSupabaseAuth`.
+ */
+export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
+  const auth = useSupabaseAuthInternal();
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+};
+
+/**
+ * Public hook consumed by components. It simply returns the context value and
+ * throws if used outside of the `SupabaseAuthProvider`.
+ */
+export const useSupabaseAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useSupabaseAuth must be used within SupabaseAuthProvider');
+  }
+  return context;
 };
