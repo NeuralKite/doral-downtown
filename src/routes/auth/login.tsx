@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Mail, 
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/auth/login')({
 function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { login, getRoleBasedRedirectPath, user } = useSupabaseAuth();
+  const { login, getRoleBasedRedirectPath, user, isAuthenticated } = useSupabaseAuth();
   const { redirect } = Route.useSearch();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,30 +66,9 @@ function LoginPage() {
 
     try {
       const result = await login(formData.email.trim(), formData.password.trim());
-      
+
       if (result) {
         setSuccess('Login successful!');
-        
-        // D) Guard de rutas / navegación tras login
-        // Esperar un momento para que el auth state se actualice
-        setTimeout(() => {
-          // Verificar el estado actual de autenticación
-          const { isAuthenticated, user: currentUser } = authState;
-          
-          if (isAuthenticated) {
-            if (!currentUser) {
-              console.log('🔄 Redirecting to profile - no profile found, needs onboarding');
-              navigate({ to: '/profile' });
-            } else {
-              // Si tiene perfil completo, redirigir según rol
-              const targetPath = redirect || getRoleBasedRedirectPath(currentUser.role || 'user');
-              console.log('🔄 Redirecting to:', targetPath, 'for role:', currentUser.role);
-              navigate({ to: targetPath as any });
-            }
-          } else {
-            console.log('🔄 Not authenticated, staying on login');
-          }
-        }, 1500); // Dar más tiempo para que se actualice el estado
       } else {
         setError('Invalid email or password. Please check your credentials and try again.');
       }
@@ -108,6 +87,20 @@ function LoginPage() {
   const handleSwitchToRegister = () => {
     navigate({ to: '/auth/register' });
   };
+
+  // Redirect once authentication state is updated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (!user) {
+      console.log('🔄 Redirecting to profile - no profile found, needs onboarding');
+      navigate({ to: '/profile' });
+    } else {
+      const targetPath = redirect || getRoleBasedRedirectPath(user.role || 'user');
+      console.log('🔄 Redirecting to:', targetPath, 'for role:', user.role);
+      navigate({ to: targetPath as any });
+    }
+  }, [isAuthenticated, user, redirect, getRoleBasedRedirectPath, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
