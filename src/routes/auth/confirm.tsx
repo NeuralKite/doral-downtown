@@ -15,14 +15,32 @@ function ConfirmPage() {
     const type = (params.get('type') || 'email') as 'email' | 'signup';
 
     const verify = async () => {
-      if (tokenHash) {
-        try {
-          await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-        } catch (err) {
-          console.error('Error verifying email:', err);
-        }
+      if (!tokenHash) {
+        navigate({ to: '/auth/login' });
+        return;
       }
-      navigate({ to: '/auth/verify-email' });
+
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        });
+
+        if (error) {
+          console.error('Error verifying email:', error);
+          navigate({ to: '/auth/login' });
+          return;
+        }
+
+        if (data.session) {
+          await supabase.auth.setSession(data.session);
+        }
+
+        navigate({ to: '/auth/onboarding' });
+      } catch (err) {
+        console.error('Error verifying email:', err);
+        navigate({ to: '/auth/login' });
+      }
     };
 
     verify();
