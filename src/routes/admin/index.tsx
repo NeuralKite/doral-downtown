@@ -1,32 +1,43 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
-import { Navigate } from '@tanstack/react-router';
-import AdminDashboard from '../../components/admin/AdminDashboard';
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useSupabaseAuth } from "../../hooks/useSupabaseAuth";
+import AdminDashboard from "../../components/admin/AdminDashboard";
 
-export const Route = createFileRoute('/admin/')({
+export const Route = createFileRoute("/admin/")({
   component: AdminPage,
 });
 
 function AdminPage() {
-  const { user, isAuthenticated, isLoading } = useSupabaseAuth();
+  const { authReady, profileReady, isAuthenticated, user } = useSupabaseAuth();
 
-  if (isLoading) {
+  // 1) Espera a saber si hay sesión
+  if (!authReady) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-primary border-t-transparent mx-auto"></div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="w-8 h-8 border-2 rounded-full animate-spin border-brand-primary border-t-transparent" />
       </div>
     );
   }
 
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/auth/login" search={{ redirect: '/admin' }} />;
+  // 2) Si no hay sesión -> login
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" search={{ redirect: "/admin" }} />;
   }
 
-  if (user.role !== 'admin') {
+  // 3) Espera a que el perfil termine de cargar
+  if (!profileReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="w-8 h-8 border-2 rounded-full animate-spin border-brand-primary border-t-transparent" />
+        <p className="sr-only">Loading profile…</p>
+      </div>
+    );
+  }
+
+  // 4) Si no hay perfil o no es admin -> fuera
+  if (!user || user.role !== "admin") {
     return <Navigate to="/profile" />;
   }
 
+  // 5) Admin OK
   return <AdminDashboard />;
 }
