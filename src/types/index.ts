@@ -49,10 +49,18 @@ export interface NewsArticle {
   id: string;
   title: string;
   excerpt: string;
-  image: string;
-  date: string;
+  image?: string;
+  date?: string;
   category: string;
   slug: string;
+  /** optional fields from database */
+  content?: string;
+  image_url?: string;
+  author_id?: string;
+  author_name?: string;
+  is_published?: boolean;
+  published_at?: string;
+  tags?: string[];
 }
 
 export interface Event {

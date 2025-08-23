@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Building, 
@@ -16,14 +15,17 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { Card, Button, Input, Modal } from '../ui';
+import { Card, Button, Input } from '../ui';
+import { supabase } from '../../lib/supabase';
+import { NewsArticle } from '../../types';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import { useNavigate } from '@tanstack/react-router';
 
 const AdminDashboard: React.FC = () => {
-  const { t } = useTranslation();
   const { user } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [showModal, setShowModal] = useState(false);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const navigate = useNavigate();
 
   // Mock data - in real app this would come from API
   const stats = {
@@ -55,6 +57,33 @@ const AdminDashboard: React.FC = () => {
     { id: 'events', label: 'Events', icon: Calendar },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const fetchArticles = async () => {
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select('id, title, category, slug, is_published, published_at, image_url, excerpt')
+      .order('published_at', { ascending: false });
+    if (!error && data) {
+      setArticles(
+        data.map(a => ({
+          id: a.id,
+          title: a.title,
+          excerpt: a.excerpt,
+          category: a.category,
+          slug: a.slug,
+          image: a.image_url,
+          date: a.published_at,
+          is_published: a.is_published,
+        }))
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'content') {
+      fetchArticles();
+    }
+  }, [activeTab]);
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -172,6 +201,49 @@ const AdminDashboard: React.FC = () => {
             ))}
           </div>
         </Card>
+      </div>
+    </div>
+  );
+
+  const renderContent = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-brand-primary">Articles</h3>
+        <Button icon={Plus} onClick={() => navigate({ to: '/admin/news/new' })}>
+          New Article
+        </Button>
+      </div>
+      <div className="bg-white rounded-xl shadow overflow-hidden">
+        <table className="min-w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Title
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {articles.map(article => (
+              <tr key={article.id} className="border-b last:border-b-0">
+                <td className="px-6 py-4">{article.title}</td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-xs ${
+                      article.is_published
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}
+                  >
+                    {article.is_published ? 'Published' : 'Draft'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -297,13 +369,7 @@ const AdminDashboard: React.FC = () => {
                 <p className="text-gray-500">Manage business listings, approvals, and features.</p>
               </div>
             )}
-            {activeTab === 'content' && (
-              <div className="text-center py-12">
-                <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">Content Management</h3>
-                <p className="text-gray-500">Manage news articles, announcements, and content.</p>
-              </div>
-            )}
+            {activeTab === 'content' && renderContent()}
             {activeTab === 'events' && (
               <div className="text-center py-12">
                 <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />

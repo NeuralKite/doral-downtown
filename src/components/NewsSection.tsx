@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, ArrowRight } from 'lucide-react';
-import { newsArticles } from '../data/mockData';
+import { newsArticles as mockArticles } from '../data/mockData';
+import { supabase } from '../lib/supabase';
+import type { NewsArticle } from '../types';
 
 interface NewsSectionProps {
   onNewsDetail?: (newsId: string) => void;
@@ -9,6 +11,34 @@ interface NewsSectionProps {
 
 const NewsSection: React.FC<NewsSectionProps> = ({ onNewsDetail }) => {
   const { t } = useTranslation();
+  const [articles, setArticles] = useState<NewsArticle[]>(mockArticles);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select('id, title, excerpt, image_url, published_at, category, slug')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false })
+        .limit(4);
+
+      if (!error && data) {
+        setArticles(
+          data.map(a => ({
+            id: a.id,
+            title: a.title,
+            excerpt: a.excerpt,
+            image: a.image_url || '',
+            date: a.published_at || '',
+            category: a.category,
+            slug: a.slug,
+          }))
+        );
+      }
+    };
+
+    fetchArticles();
+  }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -44,7 +74,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({ onNewsDetail }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {newsArticles.map((article, index) => (
+          {articles.map(article => (
             <article
               key={article.id}
               onClick={() => handleArticleClick(article.id)}

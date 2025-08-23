@@ -16,6 +16,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth/verify-email'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AdminNewsNewRouteImport } from './routes/admin/news/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminNewsNewRoute = AdminNewsNewRouteImport.update({
+  id: '/admin/news/new',
+  path: '/admin/news/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
   '/profile': typeof ProfileIndexRoute
+  '/admin/news/new': typeof AdminNewsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
   '/profile': typeof ProfileIndexRoute
+  '/admin/news/new': typeof AdminNewsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/admin/news/new': typeof AdminNewsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/business'
     | '/profile'
+    | '/admin/news/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/business'
     | '/profile'
+    | '/admin/news/new'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/profile/'
+    | '/admin/news/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
+  AdminNewsNewRoute: typeof AdminNewsNewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/news/new': {
+      id: '/admin/news/new'
+      path: '/admin/news/new'
+      fullPath: '/admin/news/new'
+      preLoaderRoute: typeof AdminNewsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
+  AdminNewsNewRoute: AdminNewsNewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

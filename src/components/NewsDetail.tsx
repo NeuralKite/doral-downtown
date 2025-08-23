@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Calendar, Clock, Share2, Facebook, Twitter, Linkedin } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Facebook, Twitter, Linkedin } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { NewsArticle } from '../types';
 
 interface NewsDetailProps {
   articleId: string;
@@ -9,41 +11,35 @@ interface NewsDetailProps {
 
 const NewsDetail: React.FC<NewsDetailProps> = ({ articleId, onBack }) => {
   const { t } = useTranslation();
+  const [article, setArticle] = useState<NewsArticle | null>(null);
 
-  // Mock article data - in real app this would come from props or API
-  const article = {
-    id: articleId,
-    title: 'New Luxury Shopping District Opens in Doral',
-    excerpt: 'CityPlace Doral expands with new high-end retailers and dining options, bringing world-class shopping to the community.',
-    content: `
-      <p>Doral continues to establish itself as a premier destination for luxury shopping and dining with the grand opening of the newest expansion at CityPlace Doral. This exciting development brings together world-class retailers, innovative dining concepts, and entertainment options that cater to the sophisticated tastes of our growing community.</p>
+  useEffect(() => {
+    const fetchArticle = async () => {
+      const { data, error } = await supabase
+        .from('news_articles')
+        .select('*, author:user_profiles(name)')
+        .eq('id', articleId)
+        .maybeSingle();
+      if (!error && data) {
+        setArticle({
+          id: data.id,
+          title: data.title,
+          excerpt: data.excerpt,
+          content: data.content,
+          image: data.image_url || '',
+          date: data.published_at || '',
+          category: data.category,
+          slug: data.slug,
+          author_name: data.author?.name,
+        });
+      }
+    };
+    fetchArticle();
+  }, [articleId]);
 
-      <p>The new district features over 50 premium brands, including several flagship stores making their South Florida debut. Visitors can explore everything from high-end fashion boutiques to cutting-edge technology stores, all within a beautifully designed outdoor shopping environment.</p>
-
-      <h3>What's New</h3>
-      <p>Among the notable additions are:</p>
-      <ul>
-        <li>Luxury fashion brands including Gucci, Louis Vuitton, and Hermès</li>
-        <li>Innovative dining concepts from renowned chefs</li>
-        <li>A state-of-the-art cinema complex</li>
-        <li>Expanded parking facilities with valet service</li>
-        <li>Beautiful landscaping and public art installations</li>
-      </ul>
-
-      <h3>Community Impact</h3>
-      <p>This expansion is expected to create over 1,000 new jobs in the area and significantly boost the local economy. The development also includes sustainable design features and green spaces that enhance the overall shopping experience while respecting the environment.</p>
-
-      <p>Mayor Juan Carlos Bermudez commented, "This expansion represents Doral's continued growth as a world-class destination. We're proud to offer our residents and visitors such exceptional shopping and dining experiences right here in our city."</p>
-
-      <h3>Grand Opening Events</h3>
-      <p>The celebration continues throughout the month with special events, exclusive previews, and promotional offers from participating retailers. Visit CityPlace Doral's website for a complete schedule of grand opening activities.</p>
-    `,
-    image: 'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg',
-    date: '2025-01-15',
-    category: 'Shopping',
-    author: 'Maria Rodriguez',
-    readTime: '5 min read'
-  };
+  const readTime = article?.content
+    ? `${Math.ceil(article.content.split(/\s+/).length / 200)} min read`
+    : '';
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -70,6 +66,14 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ articleId, onBack }) => {
         break;
     }
   };
+
+  if (!article) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="w-8 h-8 border-2 rounded-full animate-spin border-brand-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,14 +134,14 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ articleId, onBack }) => {
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500">
             <div className="flex items-center space-x-2">
               <Calendar className="h-4 w-4" />
-              <span>{formatDate(article.date)}</span>
+                      <span>{formatDate(article.date || '')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4" />
-              <span>{article.readTime}</span>
+              <span>{readTime}</span>
             </div>
             <div>
-              By <span className="font-medium text-gray-700">{article.author}</span>
+              By <span className="font-medium text-gray-700">{article.author_name}</span>
             </div>
           </div>
         </header>
@@ -145,7 +149,7 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ articleId, onBack }) => {
         {/* Featured Image */}
         <div className="mb-8">
           <img 
-            src={article.image} 
+            src={article.image}
             alt={article.title}
             className="w-full h-64 md:h-96 object-cover rounded-2xl shadow-lg"
           />
@@ -155,7 +159,7 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ articleId, onBack }) => {
         <div className="bg-white rounded-2xl shadow-md p-8 md:p-12">
           <div 
             className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            dangerouslySetInnerHTML={{ __html: article.content || '' }}
             style={{
               lineHeight: '1.8',
               fontSize: '1.125rem'
