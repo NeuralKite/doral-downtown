@@ -63,6 +63,7 @@ const AdminDashboard: React.FC = () => {
       .from('news_articles')
       .select('id, title, category, slug, is_published, published_at, image_url, excerpt')
       .order('published_at', { ascending: false });
+
     if (!error && data) {
       setArticles(
         data.map(a => ({

@@ -257,7 +257,7 @@ const useSupabaseAuthInternal = () => {
             business_website: data.businessWebsite || null,
 
             // informativo para tu UI (no seguridad)
-            account_type: data.role, // 'user' | 'business'
+            role: data.role, // 'user' | 'business'
           },
         },
       });
