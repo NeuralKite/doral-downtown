@@ -15,17 +15,17 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { Card, Button, Input, Modal } from '../ui';
-import NewsArticleForm from './NewsArticleForm';
+import { Card, Button, Input } from '../ui';
 import { supabase } from '../../lib/supabase';
 import { NewsArticle } from '../../types';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+import { useNavigate } from '@tanstack/react-router';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('overview');
-  const [showModal, setShowModal] = useState(false);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const navigate = useNavigate();
 
   // Mock data - in real app this would come from API
   const stats = {
@@ -63,6 +63,7 @@ const AdminDashboard: React.FC = () => {
       .from('news_articles')
       .select('id, title, category, slug, is_published, published_at, image_url, excerpt')
       .order('published_at', { ascending: false });
+
     if (!error && data) {
       setArticles(
         data.map(a => ({
@@ -209,7 +210,7 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-brand-primary">Articles</h3>
-        <Button icon={Plus} onClick={() => setShowModal(true)}>
+        <Button icon={Plus} onClick={() => navigate({ to: '/admin/news/new' })}>
           New Article
         </Button>
       </div>
@@ -245,19 +246,6 @@ const AdminDashboard: React.FC = () => {
           </tbody>
         </table>
       </div>
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title="Create Article"
-        size="lg"
-      >
-        <NewsArticleForm
-          onSuccess={() => {
-            setShowModal(false);
-            fetchArticles();
-          }}
-        />
-      </Modal>
     </div>
   );
 
