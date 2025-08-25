@@ -36,7 +36,13 @@ function ConfirmPage() {
           await supabase.auth.setSession(data.session);
         }
 
-        navigate({ to: '/auth/onboarding' });
+        const role = (data.user?.user_metadata?.role as 'user' | 'business') || 'user';
+        const name =
+          (data.user?.user_metadata?.name as string) ||
+          (data.user?.user_metadata?.full_name as string) ||
+          '';
+
+        navigate({ to: '/auth/onboarding', search: { role, name } });
       } catch (err) {
         console.error('Error verifying email:', err);
         navigate({ to: '/auth/login' });
