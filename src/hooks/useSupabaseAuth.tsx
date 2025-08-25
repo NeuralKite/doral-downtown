@@ -7,6 +7,7 @@ import {
 } from "react";
 import { supabase, UserProfile } from "../lib/supabase";
 import { UserRole } from "../types";
+import type { Session } from '@supabase/supabase-js';
 
 interface RegisterData {
   email: string;
@@ -47,7 +48,7 @@ const useSupabaseAuthInternal = () => {
   });
 
   // --- helpers ---
-  const setJwtRoleFromSession = (session: any) => {
+  const setJwtRoleFromSession = (session: Session | null) => {
     const role = (session?.user?.app_metadata?.role as string) || "";
     setAuthState((prev) => ({ ...prev, jwtRole: role }));
   };
@@ -238,11 +239,11 @@ const useSupabaseAuthInternal = () => {
 
       const emailRedirectTo =
         typeof window !== "undefined"
-          ? `${window.location.origin}/auth/verify-email`
+          ? `${window.location.origin}/auth/confirm`
           : undefined;
 
       // Enviamos SOLO user_metadata (options.data). Nada de app_metadata aquí.
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -290,11 +291,11 @@ const useSupabaseAuthInternal = () => {
         type: "signup",
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
         },
       });
       return !error;
-    } catch (error) {
+    } catch {
       return false;
     }
   };

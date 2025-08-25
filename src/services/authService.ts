@@ -45,7 +45,7 @@ export class AuthService {
         email: data.email,
         password: data.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email?email=${encodeURIComponent(data.email)}&role=${data.role}`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             full_name: data.name,
             role: data.role,
@@ -124,7 +124,7 @@ export class AuthService {
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+          emailRedirectTo: `${window.location.origin}/auth/confirm`
         }
       });
 

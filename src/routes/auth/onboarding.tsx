@@ -1,23 +1,42 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { z } from 'zod';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
+
+const searchSchema = z.object({
+  role: z.string().optional(),
+  name: z.string().optional(),
+});
 
 export const Route = createFileRoute('/auth/onboarding')({
   component: OnboardingPage,
+  validateSearch: searchSchema,
 });
 
 function OnboardingPage() {
   const { user, updateProfile, getRoleBasedRedirectPath } = useSupabaseAuth();
   const navigate = useNavigate();
+  const { role: roleFromSearch, name: nameFromSearch } = Route.useSearch();
 
   const [form, setForm] = useState({
-    name: user?.name || '',
+    name: user?.name || nameFromSearch || '',
     phone: user?.phone || '',
     business_name: user?.business_name || '',
     business_description: user?.business_description || '',
     business_address: user?.business_address || '',
     business_website: user?.business_website || '',
   });
+
+  useEffect(() => {
+    setForm({
+      name: user?.name || nameFromSearch || '',
+      phone: user?.phone || '',
+      business_name: user?.business_name || '',
+      business_description: user?.business_description || '',
+      business_address: user?.business_address || '',
+      business_website: user?.business_website || '',
+    });
+  }, [user, nameFromSearch]);
 
   if (!user) {
     return (
@@ -27,7 +46,7 @@ function OnboardingPage() {
     );
   }
 
-  const isBusiness = user.role === 'business';
+  const isBusiness = (user.role || roleFromSearch) === 'business';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,7 +65,9 @@ function OnboardingPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md space-y-4 w-full max-w-md">
-        <h1 className="text-xl font-semibold text-center">Complete your profile</h1>
+        <h1 className="text-xl font-semibold text-center">
+          {form.name ? `Welcome, ${form.name}!` : 'Complete your profile'}
+        </h1>
         <input
           name="name"
           value={form.name}
